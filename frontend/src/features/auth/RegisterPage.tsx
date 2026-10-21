@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form'
 import { Link } from 'react-router'
 import { Button } from '../../components/Button'
 import { FormAlert } from '../../components/FormAlert'
-import { TextField } from '../../components/TextField'
+import { TextField } from '../../components/fields'
 import { useAuth } from './auth-context'
-import { applyServerErrors } from './form-errors'
+import { applyServerErrors } from '../../lib/form-errors'
 import { registerSchema, type RegisterInput } from './schemas'
 
 export function RegisterPage() {

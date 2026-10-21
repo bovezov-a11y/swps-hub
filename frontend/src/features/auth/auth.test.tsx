@@ -1,23 +1,8 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { anna, emptyPage, mockApi } from '../../test/mock-api'
 import { renderApp } from '../../test/render'
-
-function mockFetch(status: number, body: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
-  )
-  vi.stubGlobal('fetch', fetchMock)
-  return fetchMock
-}
-
-const anna = {
-  id: '6f1c2c1e-0000-4000-8000-000000000001',
-  email: 'anna@swps.edu.pl',
-  displayName: 'Anna Nowak',
-  role: 'STUDENT',
-  createdAt: '2026-10-01T10:00:00Z',
-}
 
 describe('authentication', () => {
   it('redirects guests from the dashboard to the login page', async () => {
@@ -28,7 +13,7 @@ describe('authentication', () => {
   })
 
   it('validates the registration form before calling the API', async () => {
-    const fetchMock = mockFetch(500, {})
+    const fetchMock = mockApi({})
     renderApp('/register')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Create account' }))
@@ -40,7 +25,12 @@ describe('authentication', () => {
   })
 
   it('shows the server error when the email is already registered', async () => {
-    mockFetch(409, { status: 409, detail: 'An account with this email already exists' })
+    mockApi({
+      'POST /api/auth/register': {
+        status: 409,
+        body: { status: 409, detail: 'An account with this email already exists' },
+      },
+    })
     renderApp('/register')
 
     await userEvent.type(await screen.findByLabelText('Full name'), 'Anna Nowak')
@@ -52,10 +42,12 @@ describe('authentication', () => {
   })
 
   it('logs in and opens the dashboard', async () => {
-    const fetchMock = mockFetch(200, {
-      token: 'token',
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-      user: anna,
+    const fetchMock = mockApi({
+      'POST /api/auth/login': {
+        body: { token: 'token', expiresAt: new Date(Date.now() + 60_000).toISOString(), user: anna },
+      },
+      'GET /api/calendar': { body: [] },
+      'GET /api/courses': { body: emptyPage },
     })
     const router = renderApp('/login')
 

@@ -36,6 +36,9 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "calendar_token", unique = true, length = 64)
+    private String calendarToken;
+
     protected User() {
     }
 
@@ -69,5 +72,13 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getCalendarToken() {
+        return calendarToken;
+    }
+
+    public void setCalendarToken(String calendarToken) {
+        this.calendarToken = calendarToken;
     }
 }

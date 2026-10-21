@@ -1,5 +1,5 @@
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form'
-import { ApiError } from '../../lib/api'
+import { ApiError } from './api'
 
 /** Shows backend validation errors next to their fields, and anything else as a form-level error. */
 export function applyServerErrors<T extends FieldValues>(error: unknown, fields: Path<T>[], setError: UseFormSetError<T>) {

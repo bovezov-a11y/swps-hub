@@ -15,6 +15,8 @@ spring:
       lifecycle-management: start-only
 
 app:
+  # Time zone of the university; weekly repeating events keep their local time across DST changes.
+  time-zone: Europe/Warsaw
   jwt:
     # Development-only key. Production must provide JWT_SECRET (base64, at least 256 bits).
     secret: ${JWT_SECRET:7tepMSjA0YEJoGFGs7SKeSjppP6CEat5QMxj5LjLDUg=}
