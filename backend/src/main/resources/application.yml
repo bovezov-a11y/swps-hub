@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: student-hub
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  mvc:
+    problemdetails:
+      enabled: true
+  docker:
+    compose:
+      # Starts the PostgreSQL container from the root compose file when running locally.
+      file: ../compose.yaml
+      lifecycle-management: start-only
+
+app:
+  jwt:
+    # Development-only key. Production must provide JWT_SECRET (base64, at least 256 bits).
+    secret: ${JWT_SECRET:7tepMSjA0YEJoGFGs7SKeSjppP6CEat5QMxj5LjLDUg=}
+    issuer: student-hub
+    ttl: 24h
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
