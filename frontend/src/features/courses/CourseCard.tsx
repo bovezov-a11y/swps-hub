@@ -1,5 +1,7 @@
+import { Check, FileText, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../../components/Button'
+import { ProgramIcon } from '../../components/ProgramIcon'
 import { studyYearLabel, terms } from '../../lib/academic'
 import type { CourseSummary } from '../../lib/types'
 import { useEnrollment } from './api'
@@ -8,44 +10,40 @@ export function CourseCard({ course, showProgram = false }: { course: CourseSumm
   const enrollment = useEnrollment()
 
   return (
-    <article className="relative flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-indigo-300 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <span className="rounded-md bg-indigo-50 px-2 py-1 font-mono text-xs font-semibold text-indigo-700">
+    <article className="card group relative flex flex-col p-5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card-hover">
+      <div className="flex items-center gap-3">
+        <ProgramIcon slug={course.program.slug} size="sm" />
+        <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">
           {course.code}
         </span>
-        <span className="text-right text-xs text-slate-500">
+        <span className="ml-auto text-xs font-medium text-slate-500">
           {studyYearLabel(course.studyYear)} · {terms[course.term]}
         </span>
       </div>
-      <h3 className="mt-3 font-semibold text-slate-900">
+      <h3 className="mt-4 line-clamp-2 font-semibold text-slate-900 group-hover:text-indigo-700">
         {/* The link covers the whole card; the join button sits above it. */}
         <Link to={`/courses/${course.id}`} className="after:absolute after:inset-0 after:rounded-2xl">
           {course.name}
         </Link>
       </h3>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 mb-5 truncate text-sm text-slate-500">
         {showProgram ? course.program.name : (course.lecturer ?? 'Lecturer not set')}
       </p>
 
-      <div className="mt-auto flex items-center justify-between gap-3 pt-5">
-        <span className="flex gap-3 text-sm text-slate-500">
-          <span title="Shared materials">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        <span className="flex items-center gap-4 text-sm text-slate-500">
+          <span className="inline-flex items-center gap-1.5" title="Shared materials">
+            <FileText className="size-4 text-slate-400" aria-hidden="true" />
             {course.materialCount} {course.materialCount === 1 ? 'file' : 'files'}
           </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {course.memberCount} {course.memberCount === 1 ? 'member' : 'members'}
+          <span className="inline-flex items-center gap-1.5" title="Members">
+            <Users className="size-4 text-slate-400" aria-hidden="true" />
+            {course.memberCount}
           </span>
         </span>
         {course.enrolled ? (
-          <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700">
-            <svg viewBox="0 0 20 20" fill="currentColor" className="size-4" aria-hidden="true">
-              <path
-                fillRule="evenodd"
-                d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.58l7.3-7.3a1 1 0 0 1 1.4 0Z"
-                clipRule="evenodd"
-              />
-            </svg>
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <Check className="size-3.5" aria-hidden="true" />
             Joined
           </span>
         ) : (

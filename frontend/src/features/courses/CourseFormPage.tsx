@@ -93,7 +93,7 @@ function CourseForm({ course, programs }: { course?: CourseDetail; programs: Pro
             </option>
           ))}
         </SelectField>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <SelectField
             label="Year of study"
             error={errors.studyYear?.message}
@@ -113,7 +113,7 @@ function CourseForm({ course, programs }: { course?: CourseDetail; programs: Pro
             ))}
           </SelectField>
         </div>
-        <div className="grid gap-5 sm:grid-cols-[1fr_2fr]">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[1fr_2fr]">
           <TextField label="Course code" placeholder="PSY-101" error={errors.code?.message} {...register('code')} />
           <TextField
             label="Course name"

@@ -1,5 +1,7 @@
+import { Clock, MapPin, Trash2 } from 'lucide-react'
 import { EventTypeBadge } from '../../components/EventTypeBadge'
 import { formatLongDay, formatTimeRange, groupByDay } from '../../lib/dates'
+import { eventTypes } from '../../lib/event-types'
 import type { CourseEvent } from '../../lib/types'
 
 type EventListProps = {
@@ -13,18 +15,25 @@ export function EventList({ events, onDelete }: EventListProps) {
       {groupByDay(events).map((group) => (
         <section key={group.day.toISOString()}>
           <h3 className="text-sm font-semibold text-slate-500">{formatLongDay(group.day)}</h3>
-          <ul className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+          <ul className="card mt-2 divide-y divide-slate-100 overflow-hidden">
             {group.items.map((event) => (
-              <li key={event.id} className="flex items-center gap-4 px-4 py-3">
-                <span className="w-24 shrink-0 text-sm font-medium text-slate-900 tabular-nums">
+              <li key={event.id} className="relative flex items-center gap-4 px-5 py-3.5 transition hover:bg-slate-50/70">
+                <span aria-hidden="true" className={`absolute inset-y-3 left-0 w-1 rounded-r-full ${eventTypes[event.type].accent}`} />
+                <span className="inline-flex w-28 shrink-0 items-center gap-1.5 text-sm font-semibold text-slate-900 tabular-nums">
+                  <Clock className="size-3.5 text-slate-400" aria-hidden="true" />
                   {formatTimeRange(event.startsAt, event.endsAt)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <EventTypeBadge type={event.type} />
-                    <span className="truncate text-sm font-medium">{event.title}</span>
+                    <span className="truncate text-sm font-semibold">{event.title}</span>
                   </div>
-                  {event.location && <p className="mt-0.5 truncate text-sm text-slate-500">{event.location}</p>}
+                  {event.location && (
+                    <p className="mt-0.5 inline-flex items-center gap-1 truncate text-sm text-slate-500">
+                      <MapPin className="size-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                      {event.location}
+                    </p>
+                  )}
                 </div>
                 {event.canDelete && (
                   <button
@@ -33,9 +42,7 @@ export function EventList({ events, onDelete }: EventListProps) {
                     className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
                     aria-label={`Delete ${event.title}`}
                   >
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-4" aria-hidden="true">
-                      <path d="M4 6h12M8 6V4h4v2m-6 0 .7 10h6.6L14 6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <Trash2 className="size-4" aria-hidden="true" />
                   </button>
                 )}
               </li>

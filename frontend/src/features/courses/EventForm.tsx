@@ -63,7 +63,7 @@ export function EventForm({ courseId, onDone }: { courseId: string; onDone: () =
     >
       <h3 className="font-semibold">Add an event</h3>
       {errors.root && <FormAlert message={errors.root.message} />}
-      <div className="grid gap-5 sm:grid-cols-[1fr_2fr]">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-[1fr_2fr]">
         <SelectField label="Type" {...register('type')}>
           {eventTypeOrder.map((value) => (
             <option key={value} value={value}>
@@ -78,7 +78,7 @@ export function EventForm({ courseId, onDone }: { courseId: string; onDone: () =
           {...register('title')}
         />
       </div>
-      <div className="grid gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <TextField label="Date" type="date" error={errors.date?.message} {...register('date')} />
         <TextField
           label={isDeadline ? 'Due at' : 'Starts'}

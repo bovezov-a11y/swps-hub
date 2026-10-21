@@ -1,6 +1,8 @@
+import { FileQuestion, SearchX, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../../components/Button'
 import { EmptyState, ErrorState } from '../../components/EmptyState'
+import { ListSkeleton } from '../../components/Skeleton'
 import { Spinner } from '../../components/Spinner'
 import { academicYearOptions, materialTypeOrder, materialTypes } from '../../lib/academic'
 import type { CourseDetail, Material } from '../../lib/types'
@@ -40,15 +42,20 @@ export function MaterialsSection({ course }: { course: CourseDetail }) {
               onClick={() => setFilters({ ...filters, type: chip.value })}
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
                 filters.type === chip.value
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white text-slate-700 shadow-xs ring-1 ring-slate-200 hover:bg-slate-50'
               }`}
             >
               {chip.label}
             </button>
           ))}
         </div>
-        {!isUploading && <Button onClick={() => setIsUploading(true)}>Share a file</Button>}
+        {!isUploading && (
+          <Button onClick={() => setIsUploading(true)}>
+            <Upload className="size-4" aria-hidden="true" />
+            Share a file
+          </Button>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -56,7 +63,7 @@ export function MaterialsSection({ course }: { course: CourseDetail }) {
           value={filters.year}
           onChange={(event) => setFilters({ ...filters, year: event.target.value })}
           aria-label="Academic year"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-xs outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-xs outline-none hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
         >
           <option value="">All years</option>
           {years.map((year) => (
@@ -67,7 +74,7 @@ export function MaterialsSection({ course }: { course: CourseDetail }) {
           value={filters.sort}
           onChange={(event) => setFilters({ ...filters, sort: event.target.value as MaterialFilters['sort'] })}
           aria-label="Sort by"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-xs outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-xs outline-none hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
         >
           <option value="top">Most helpful</option>
           <option value="new">Newest</option>
@@ -83,13 +90,12 @@ export function MaterialsSection({ course }: { course: CourseDetail }) {
 
       <div className="mt-6">
         {materials.isPending ? (
-          <div className="flex justify-center py-10 text-indigo-600">
-            <Spinner />
-          </div>
+          <ListSkeleton />
         ) : materials.isError ? (
           <ErrorState text="Could not load materials." />
         ) : materials.data.length === 0 ? (
           <EmptyState
+            icon={isFiltered ? SearchX : FileQuestion}
             title={isFiltered ? 'Nothing matches these filters' : 'No materials yet'}
             text={
               isFiltered

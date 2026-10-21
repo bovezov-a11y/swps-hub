@@ -32,7 +32,7 @@ export function CalendarPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold" aria-live="polite">

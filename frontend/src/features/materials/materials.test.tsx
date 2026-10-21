@@ -41,7 +41,7 @@ describe('course materials', () => {
     renderApp(`/courses/${statistics.id}`)
 
     const card = (await screen.findByRole('heading', { name: 'Final exam 2025' })).closest('li')!
-    expect(within(card).getByText('Shared by Jan Kowalski', { exact: false })).toBeInTheDocument()
+    expect(within(card).getByText('Jan Kowalski')).toBeInTheDocument()
 
     await userEvent.click(within(card).getByRole('button', { name: 'Upvote Final exam 2025' }))
 

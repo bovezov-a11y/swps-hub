@@ -113,7 +113,7 @@ export function UploadForm({ courseId, onDone }: { courseId: string; onDone: () 
         {errors.file && <p className="mt-1.5 text-sm text-red-600">{errors.file.message}</p>}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <SelectField label="What is it?" {...register('type')}>
           {materialTypeOrder.map((type) => (
             <option key={type} value={type}>
