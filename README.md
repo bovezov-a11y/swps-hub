@@ -1,5 +1,7 @@
 # SWPS Hub
 
+[![CI](https://github.com/bovezov-a11y/swps-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/bovezov-a11y/swps-hub/actions/workflows/ci.yml)
+
 An unofficial platform for SWPS University students: course schedules, an exam calendar, and notes and past exams shared by students of every program and year.
 
 > Status: Phases 1 and 2 complete. Not affiliated with or endorsed by SWPS University.
