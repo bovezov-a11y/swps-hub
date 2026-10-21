@@ -117,6 +117,14 @@ cd frontend && npm install && npm run dev
 
 API documentation (Swagger UI): http://localhost:8080/swagger-ui.html
 
+### Configuration
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `JWT_SECRET` | random per start | Base64 key (at least 256 bits) that signs login tokens. **Required in production**; create one with `openssl rand -base64 32`. |
+| `STORAGE_DIR` | `./data/uploads` | Where uploaded materials are stored. |
+| `SPRING_DATASOURCE_URL`, `_USERNAME`, `_PASSWORD` | local Docker database | PostgreSQL connection. |
+
 ### Tests
 
 ```bash

@@ -2,6 +2,8 @@ package com.studenthub.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.studenthub.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,11 +29,14 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.SecureRandom;
 import java.util.Base64;
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
 class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -70,14 +75,27 @@ class SecurityConfig {
         return new ProviderManager(provider);
     }
 
+    /** Signs access tokens. Without a configured secret a random key is used, which is fine for local development. */
     @Bean
-    JwtEncoder jwtEncoder(JwtProperties properties) {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey(properties)));
+    SecretKey jwtSigningKey(JwtProperties properties) {
+        if (properties.secret() == null || properties.secret().isBlank()) {
+            log.warn("JWT_SECRET is not set; using a random signing key, so sessions end when the application restarts. "
+                    + "Set JWT_SECRET in production.");
+            byte[] key = new byte[32];
+            new SecureRandom().nextBytes(key);
+            return new SecretKeySpec(key, "HmacSHA256");
+        }
+        return new SecretKeySpec(Base64.getDecoder().decode(properties.secret()), "HmacSHA256");
     }
 
     @Bean
-    JwtDecoder jwtDecoder(JwtProperties properties) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey(properties))
+    JwtEncoder jwtEncoder(SecretKey jwtSigningKey) {
+        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSigningKey));
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(SecretKey jwtSigningKey, JwtProperties properties) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSigningKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
         decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(properties.issuer()));
@@ -91,9 +109,5 @@ class SecurityConfig {
         var converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(authorities);
         return converter;
-    }
-
-    private static SecretKey secretKey(JwtProperties properties) {
-        return new SecretKeySpec(Base64.getDecoder().decode(properties.secret()), "HmacSHA256");
     }
 }

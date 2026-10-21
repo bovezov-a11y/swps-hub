@@ -22,8 +22,9 @@ app:
   # Time zone of the university; weekly repeating events keep their local time across DST changes.
   time-zone: Europe/Warsaw
   jwt:
-    # Development-only key. Production must provide JWT_SECRET (base64, at least 256 bits).
-    secret: ${JWT_SECRET:7tepMSjA0YEJoGFGs7SKeSjppP6CEat5QMxj5LjLDUg=}
+    # Base64 key of at least 256 bits; generate one with `openssl rand -base64 32`.
+    # When unset, a random key is created at startup and sessions end on every restart.
+    secret: ${JWT_SECRET:}
     issuer: student-hub
     ttl: 24h
   storage:

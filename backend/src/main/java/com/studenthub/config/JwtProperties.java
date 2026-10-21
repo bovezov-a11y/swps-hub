@@ -9,5 +9,5 @@ import java.time.Duration;
 
 @Validated
 @ConfigurationProperties("app.jwt")
-public record JwtProperties(@NotBlank String secret, @NotBlank String issuer, @NotNull Duration ttl) {
+public record JwtProperties(String secret, @NotBlank String issuer, @NotNull Duration ttl) {
 }
