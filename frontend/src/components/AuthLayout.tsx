@@ -1,10 +1,11 @@
 import { Outlet } from 'react-router'
+import { Disclaimer } from './Disclaimer'
 import { Logo } from './Logo'
 
 const highlights = [
   { title: 'Your timetable, in one place', text: 'Lectures, labs and exams from every course you take.' },
   { title: 'Never miss an exam', text: 'Sync your calendar to Google, Apple or Outlook in one click.' },
-  { title: 'Learn together', text: 'Share notes and materials with students in your courses.' },
+  { title: 'Learn from past years', text: 'Find notes, summaries and past exams for every course, shared by students.' },
 ]
 
 export function AuthLayout() {
@@ -44,7 +45,10 @@ export function AuthLayout() {
             ))}
           </ul>
         </div>
-        <p className="relative text-sm text-indigo-300">Built by students, for students.</p>
+        <div className="relative text-indigo-300">
+          <p className="text-sm">Built by students, for students.</p>
+          <Disclaimer className="mt-1 text-indigo-300/80" />
+        </div>
       </aside>
 
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-8">
@@ -53,6 +57,7 @@ export function AuthLayout() {
             <Logo />
           </div>
           <Outlet />
+          <Disclaimer className="mt-12 text-center text-slate-400 lg:hidden" />
         </div>
       </main>
     </div>

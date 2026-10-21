@@ -1,8 +1,8 @@
-# SWPS Student Hub
+# SWPS Hub
 
-A platform for SWPS University students: course schedules, exam calendar and shared study notes, in one place.
+An unofficial platform for SWPS University students: course schedules, an exam calendar, and notes and past exams shared by students of every program and year.
 
-> Status: Phase 1 (MVP) complete, Phase 2 next
+> Status: Phases 1 and 2 complete. Not affiliated with or endorsed by SWPS University.
 
 ## Features
 
@@ -13,10 +13,16 @@ A platform for SWPS University students: course schedules, exam calendar and sha
 - Weekly personal calendar and a dashboard of upcoming exams, deadlines and classes
 - Calendar export as a private `.ics` feed (Google Calendar, Apple Calendar, Outlook) with a resettable secret link
 
-### Phase 2 – Notes sharing
-- Upload notes and past exam materials per course (S3-compatible storage)
-- Upvotes, comments and full-text search
-- Moderation (report / hide content)
+### Phase 2 – Shared materials ✅
+- Courses organised by program (Psychology, Computer Science, Law…) and year of study, persisting across academic years
+- Explore page with search across all programs
+- Upload past exams, notes, summaries and assignments (up to 25 MB) tagged with their academic year
+- Filter by type and year, sort by most helpful or newest, one upvote per student
+- Dashboard feed of new materials in your courses
+
+### Next
+- Comments on materials, reporting and moderation
+- S3-compatible object storage for uploads
 
 ### Phase 3 – Production polish
 - `@swps.edu.pl` email verification
@@ -29,6 +35,7 @@ A platform for SWPS University students: course schedules, exam calendar and sha
 | Layer    | Technology |
 |----------|------------|
 | Backend  | Java 25, Spring Boot, Spring Security (JWT), Spring Data JPA, Flyway, springdoc-openapi |
+| Storage  | Local disk behind a `FileStorage` interface (swappable for S3) |
 | Database | PostgreSQL |
 | Frontend | React, TypeScript, Vite, TanStack Query, React Router, Tailwind CSS |
 | Testing  | JUnit 5, Testcontainers, Vitest, React Testing Library |
@@ -48,9 +55,11 @@ The backend is organised by feature (`auth`, `course`, `event`, `calendar`) rath
 ### Domain model
 
 - **User** – email, password hash, display name, role, calendar feed token
-- **Course** – code, name, semester, lecturer, description; the code is unique per semester
+- **Program** – field of study, such as Psychology or Computer Science
+- **Course** – a subject in a program and year of study, with code, name, term, lecturer and description; the code is unique within a program
 - **Enrollment** – a user joined a course
 - **CourseEvent** – lecture / class / lab / exam / deadline with start, end and location
+- **Material** – a shared file (past exam, notes, summary…) with its academic year and vote count
 
 ### API
 
@@ -58,11 +67,17 @@ The backend is organised by feature (`auth`, `course`, `event`, `calendar`) rath
 |--------|------|-------------|
 | `POST` | `/api/auth/register`, `/api/auth/login` | Create an account or log in; returns a JWT |
 | `GET` | `/api/users/me` | Current user |
-| `GET` `POST` | `/api/courses` | Search courses (`q`, `semester`, `mine`, `page`) or create one |
+| `GET` | `/api/programs` | Programs with their course counts |
+| `GET` `POST` | `/api/courses` | Search courses (`q`, `program`, `year`, `mine`, `page`) or create one |
 | `GET` `PUT` | `/api/courses/{id}` | Course details; edit (author or moderator) |
 | `PUT` `DELETE` | `/api/courses/{id}/enrollment` | Join or leave a course |
 | `GET` `POST` | `/api/courses/{id}/events` | List or add events (`repeatWeeks` for weekly classes) |
 | `DELETE` | `/api/events/{id}` | Delete an event (event author, course author or moderator) |
+| `GET` `POST` | `/api/courses/{id}/materials` | List materials (`type`, `year`, `sort`) or upload one (multipart) |
+| `GET` | `/api/materials/{id}/file` | Download a material |
+| `PUT` `DELETE` | `/api/materials/{id}/vote` | Upvote or remove the upvote |
+| `DELETE` | `/api/materials/{id}` | Delete a material (uploader or moderator) |
+| `GET` | `/api/materials/feed` | Newest materials in joined courses |
 | `GET` | `/api/calendar?from=&to=` | Events from all joined courses |
 | `GET` `POST` | `/api/calendar/feed`, `/api/calendar/feed/reset` | Private `.ics` feed link; reset it |
 | `GET` | `/api/calendar/feeds/{token}.ics` | The iCalendar feed itself (no login, secret token) |

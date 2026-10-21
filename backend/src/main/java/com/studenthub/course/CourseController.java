@@ -33,11 +33,12 @@ class CourseController {
     @GetMapping
     PageResponse<CourseSummary> search(CurrentUser user,
                                        @RequestParam(required = false) String q,
-                                       @RequestParam(required = false) String semester,
+                                       @RequestParam(required = false) String program,
+                                       @RequestParam(required = false) Integer year,
                                        @RequestParam(defaultValue = "false") boolean mine,
                                        @RequestParam(defaultValue = "0") int page,
                                        @RequestParam(defaultValue = "20") int size) {
-        return courseService.search(user, q, semester, mine, page, size);
+        return courseService.search(user, q, program, year, mine, page, size);
     }
 
     @PostMapping

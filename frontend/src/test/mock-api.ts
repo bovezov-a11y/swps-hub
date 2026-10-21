@@ -34,6 +34,24 @@ export const anna = {
 
 export const emptyPage = { items: [], page: 0, size: 20, totalItems: 0, totalPages: 0 }
 
+export const programs = [
+  { id: 'p0000000-0000-4000-8000-000000000001', slug: 'psychology', name: 'Psychology', courseCount: 2 },
+  { id: 'p0000000-0000-4000-8000-000000000002', slug: 'computer-science', name: 'Computer Science', courseCount: 0 },
+]
+
+export const statistics = {
+  id: 'c0000000-0000-4000-8000-000000000001',
+  code: 'STA-201',
+  name: 'Statistics in Psychology',
+  program: { id: programs[0]!.id, slug: 'psychology', name: 'Psychology' },
+  studyYear: 2,
+  term: 'WINTER',
+  lecturer: 'Dr Kowalska',
+  memberCount: 12,
+  materialCount: 3,
+  enrolled: false,
+}
+
 /** Starts the test signed in as Anna. */
 export function signIn() {
   localStorage.setItem(

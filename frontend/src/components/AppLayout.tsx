@@ -1,10 +1,12 @@
 import { NavLink, Outlet } from 'react-router'
 import { useAuth } from '../features/auth/auth-context'
+import { Disclaimer } from './Disclaimer'
 import { Logo } from './Logo'
 
 const navigation = [
   { to: '/', label: 'Dashboard' },
-  { to: '/courses', label: 'Courses' },
+  { to: '/explore', label: 'Explore' },
+  { to: '/my-courses', label: 'My courses' },
   { to: '/calendar', label: 'Calendar' },
 ]
 
@@ -21,7 +23,7 @@ export function AppLayout() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-8">
-            <NavLink to="/" aria-label="Student Hub home">
+            <NavLink to="/" aria-label="SWPS Hub home">
               <Logo />
             </NavLink>
             <nav className="hidden items-center gap-1 sm:flex" aria-label="Main">
@@ -65,6 +67,10 @@ export function AppLayout() {
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <Outlet />
       </main>
+
+      <footer className="mx-auto max-w-6xl px-4 pt-4 pb-10 sm:px-6">
+        <Disclaimer className="border-t border-slate-200 pt-6 text-slate-400" />
+      </footer>
     </div>
   )
 }

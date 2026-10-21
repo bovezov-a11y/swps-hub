@@ -7,6 +7,8 @@ import { Spinner } from '../components/Spinner'
 import { useAuth } from '../features/auth/auth-context'
 import { useCalendar } from '../features/calendar/api'
 import { useCourses } from '../features/courses/api'
+import { useMaterialFeed } from '../features/materials/api'
+import { materialTypes } from '../lib/academic'
 import { addDays, formatShortDay, formatTimeRange, relativeDay } from '../lib/dates'
 import { isAssessment } from '../lib/event-types'
 import type { CalendarEvent } from '../lib/types'
@@ -17,7 +19,8 @@ export function DashboardPage() {
   // Fixed for the lifetime of the page so the calendar query key stays stable between renders.
   const [now] = useState(() => new Date())
   const calendar = useCalendar(now, addDays(now, 60))
-  const myCourses = useCourses({ q: '', semester: '', mine: true, page: 0 })
+  const myCourses = useCourses({ mine: true, size: 8 })
+  const feed = useMaterialFeed()
 
   const nextUp = calendar.data?.filter((event) => !isAssessment(event.type)).slice(0, 5) ?? []
   const assessments = calendar.data?.filter((event) => isAssessment(event.type)).slice(0, 5) ?? []
@@ -43,30 +46,59 @@ export function DashboardPage() {
           </Panel>
         </div>
 
-        <Panel title="Your courses" action={<PanelLink to="/courses?mine=true">All</PanelLink>}>
-          {myCourses.isPending ? (
-            <PanelSpinner />
-          ) : myCourses.isError ? (
-            <ErrorState text="Could not load your courses." />
-          ) : myCourses.data.items.length === 0 ? (
-            <EmptyState
-              title="No courses yet"
-              text="Join your courses to fill your timetable."
-              action={<LinkButton to="/courses">Browse courses</LinkButton>}
-            />
-          ) : (
-            <ul className="-my-2 divide-y divide-slate-100">
-              {myCourses.data.items.slice(0, 8).map((course) => (
-                <li key={course.id}>
-                  <Link to={`/courses/${course.id}`} className="group block py-2.5">
-                    <span className="font-mono text-xs font-semibold text-indigo-700">{course.code}</span>
-                    <span className="block truncate text-sm font-medium group-hover:text-indigo-600">{course.name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+        <div className="space-y-6">
+          <Panel title="Your courses" action={<PanelLink to="/my-courses">All</PanelLink>}>
+            {myCourses.isPending ? (
+              <PanelSpinner />
+            ) : myCourses.isError ? (
+              <ErrorState text="Could not load your courses." />
+            ) : myCourses.data.items.length === 0 ? (
+              <EmptyState
+                title="No courses yet"
+                text="Join your courses to fill your timetable."
+                action={<LinkButton to="/explore">Explore programs</LinkButton>}
+              />
+            ) : (
+              <ul className="-my-2 divide-y divide-slate-100">
+                {myCourses.data.items.slice(0, 8).map((course) => (
+                  <li key={course.id}>
+                    <Link to={`/courses/${course.id}`} className="group block py-2.5">
+                      <span className="font-mono text-xs font-semibold text-indigo-700">{course.code}</span>
+                      <span className="block truncate text-sm font-medium group-hover:text-indigo-600">{course.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+          <Panel title="New in your courses">
+            {feed.isPending ? (
+              <PanelSpinner />
+            ) : feed.isError ? (
+              <ErrorState text="Could not load new materials." />
+            ) : feed.data.length === 0 ? (
+              <p className="py-2 text-sm text-slate-500">
+                Notes and past exams shared in your courses will show up here.
+              </p>
+            ) : (
+              <ul className="-my-2 divide-y divide-slate-100">
+                {feed.data.map((material) => (
+                  <li key={material.id}>
+                    <Link to={`/courses/${material.course.id}`} className="group block py-2.5">
+                      <span className="block truncate text-sm font-medium group-hover:text-indigo-600">
+                        {material.title}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {materialTypes[material.type].label} · {material.course.code} ·{' '}
+                        {relativeDay(material.createdAt).toLowerCase()}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        </div>
       </div>
     </>
   )

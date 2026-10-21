@@ -8,7 +8,7 @@ RUN ./mvnw -q package -DskipTests
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app
-RUN useradd --system --uid 1001 app
+RUN useradd --system --uid 1001 app && mkdir -p /app/data/uploads && chown -R app /app/data
 COPY --from=build /app/target/backend-*.jar app.jar
 USER app
 EXPOSE 8080

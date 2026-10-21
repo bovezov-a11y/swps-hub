@@ -22,6 +22,7 @@ export class ApiError extends Error {
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  /** Sent as JSON, or as multipart form data when it is a FormData. */
   body?: unknown
 }
 
@@ -32,16 +33,29 @@ export function onUnauthorized(handler: (() => void) | null) {
   unauthorizedHandler = handler
 }
 
-export async function api<T>(path: string, { method = 'GET', body }: RequestOptions = {}): Promise<T> {
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await send(path, options, 'application/json')
+  if (response.status === 204) return undefined as T
+  return (await response.json()) as T
+}
+
+/** Downloads a protected file. Links cannot carry the bearer token, so files are fetched and handed over as blobs. */
+export async function apiBlob(path: string): Promise<Blob> {
+  const response = await send(path, {}, '*/*')
+  return response.blob()
+}
+
+async function send(path: string, { method = 'GET', body }: RequestOptions, accept: string) {
   const session = sessionStore.get()
-  const headers: Record<string, string> = { Accept: 'application/json' }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const headers: Record<string, string> = { Accept: accept }
+  const isForm = body instanceof FormData
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   if (session) headers.Authorization = `Bearer ${session.token}`
 
   const response = await fetch(`/api${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   })
 
   if (!response.ok) {
@@ -53,7 +67,5 @@ export async function api<T>(path: string, { method = 'GET', body }: RequestOpti
       problem?.errors,
     )
   }
-
-  if (response.status === 204) return undefined as T
-  return (await response.json()) as T
+  return response
 }

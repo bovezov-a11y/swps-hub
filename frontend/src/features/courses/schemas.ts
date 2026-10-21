@@ -1,10 +1,13 @@
 import { z } from 'zod'
+import { termOrder } from '../../lib/academic'
 import { eventTypeOrder } from '../../lib/event-types'
 
 export const courseSchema = z.object({
+  programId: z.string().min(1, { error: 'Choose a program' }),
+  studyYear: z.number({ error: 'Choose a year' }).int().min(1).max(5),
+  term: z.enum(termOrder),
   code: z.string().trim().min(1, { error: 'Enter the course code' }).max(20, { error: 'Use at most 20 characters' }),
   name: z.string().trim().min(1, { error: 'Enter the course name' }).max(200, { error: 'Use at most 200 characters' }),
-  semester: z.string().regex(/^\d{4}\/\d{2} (Winter|Summer)$/, { error: 'Choose a semester' }),
   lecturer: z.string().trim().max(100, { error: 'Use at most 100 characters' }),
   description: z.string().trim().max(2000, { error: 'Use at most 2000 characters' }),
 })

@@ -22,13 +22,22 @@ export type Page<T> = {
   totalPages: number
 }
 
+export type ProgramRef = { id: string; slug: string; name: string }
+
+export type Program = ProgramRef & { courseCount: number }
+
+export type Term = 'WINTER' | 'SUMMER' | 'FULL_YEAR'
+
 export type CourseSummary = {
   id: string
   code: string
   name: string
-  semester: string
+  program: ProgramRef
+  studyYear: number
+  term: Term
   lecturer: string | null
   memberCount: number
+  materialCount: number
   enrolled: boolean
 }
 
@@ -59,4 +68,23 @@ export type CalendarEvent = {
   endsAt: string
   location: string | null
   course: { id: string; code: string; name: string }
+}
+
+export type MaterialType = 'PAST_EXAM' | 'NOTES' | 'SUMMARY' | 'ASSIGNMENT' | 'OTHER'
+
+export type Material = {
+  id: string
+  course: { id: string; code: string; name: string }
+  type: MaterialType
+  title: string
+  description: string | null
+  academicYear: string
+  fileName: string
+  contentType: string
+  fileSize: number
+  voteCount: number
+  voted: boolean
+  uploader: { id: string; displayName: string }
+  createdAt: string
+  canDelete: boolean
 }

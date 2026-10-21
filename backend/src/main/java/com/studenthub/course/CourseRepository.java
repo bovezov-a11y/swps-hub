@@ -6,17 +6,33 @@ import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 public interface CourseRepository extends JpaRepository<Course, UUID>, JpaSpecificationExecutor<Course> {
 
-    boolean existsByCodeAndSemester(String code, String semester);
+    boolean existsByProgramIdAndCode(UUID programId, String code);
 
-    boolean existsByCodeAndSemesterAndIdNot(String code, String semester, UUID id);
+    boolean existsByProgramIdAndCodeAndIdNot(UUID programId, String code, UUID id);
+
+    @Query("""
+            select m.course.id as courseId, count(m) as materials
+            from Material m
+            where m.course.id in :courseIds
+            group by m.course.id
+            """)
+    List<MaterialCount> countMaterials(Collection<UUID> courseIds);
+
+    interface MaterialCount {
+        UUID getCourseId();
+
+        long getMaterials();
+    }
 
     /**
      * Courses matching every given filter; a {@code null} filter is ignored.
@@ -24,11 +40,14 @@ public interface CourseRepository extends JpaRepository<Course, UUID>, JpaSpecif
      * @param text           matched case-insensitively against the course code and name
      * @param enrolledUserId keeps only courses this user joined
      */
-    static Specification<Course> search(String text, String semester, UUID enrolledUserId) {
+    static Specification<Course> search(String text, UUID programId, Integer studyYear, UUID enrolledUserId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (semester != null) {
-                predicates.add(cb.equal(root.get("semester"), semester));
+            if (programId != null) {
+                predicates.add(cb.equal(root.get("programId"), programId));
+            }
+            if (studyYear != null) {
+                predicates.add(cb.equal(root.get("studyYear"), studyYear));
             }
             if (text != null) {
                 String pattern = "%" + escapeLike(text.toLowerCase(Locale.ROOT)) + "%";

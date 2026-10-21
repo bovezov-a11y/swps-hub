@@ -11,13 +11,14 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Base class for API tests: a full application context on a real PostgreSQL, plus helpers for authenticated calls.
  * Tests share one database, so they create their own users and unique names instead of relying on a clean state.
  */
-@SpringBootTest
+@SpringBootTest(properties = "app.storage.local-dir=target/test-uploads")
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 public abstract class ApiTest {
@@ -62,12 +63,21 @@ public abstract class ApiTest {
         return mvc.delete().uri(uri).header(HttpHeaders.AUTHORIZATION, "Bearer " + user.token()).exchange();
     }
 
-    /** Creates a course with a unique code and returns its id. The author is enrolled automatically. */
+    /** Creates a first-year Psychology course and returns its id. The author is enrolled automatically. */
     protected String createCourse(TestUser author, String code) {
+        return createCourse(author, code, "psychology", 1);
+    }
+
+    protected String createCourse(TestUser author, String code, String programSlug, int studyYear) {
         MvcTestResult result = post(author, "/api/courses", """
-                {"code": "%s", "name": "Course %s", "semester": "2026/27 Winter"}
-                """.formatted(code, code));
+                {"programId": "%s", "studyYear": %d, "term": "WINTER", "code": "%s", "name": "Course %s"}
+                """.formatted(programId(author, programSlug), studyYear, code, code));
         return JsonPath.read(body(result), "$.id");
+    }
+
+    protected String programId(TestUser user, String slug) {
+        List<String> ids = JsonPath.read(body(get(user, "/api/programs")), "$[?(@.slug == '%s')].id".formatted(slug));
+        return ids.getFirst();
     }
 
     protected static String uniqueCode() {

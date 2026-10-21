@@ -67,7 +67,7 @@ export function CalendarPage() {
                       title="Nothing this week"
                       text="Events from the courses you join show up here. Joined a course already? Check another week."
                       action={
-                        <LinkButton to="/courses" variant="secondary">
+                        <LinkButton to="/explore" variant="secondary">
                           Browse courses
                         </LinkButton>
                       }

@@ -1,9 +1,10 @@
 import { Link } from 'react-router'
 import { Button } from '../../components/Button'
+import { studyYearLabel, terms } from '../../lib/academic'
 import type { CourseSummary } from '../../lib/types'
 import { useEnrollment } from './api'
 
-export function CourseCard({ course }: { course: CourseSummary }) {
+export function CourseCard({ course, showProgram = false }: { course: CourseSummary; showProgram?: boolean }) {
   const enrollment = useEnrollment()
 
   return (
@@ -12,7 +13,9 @@ export function CourseCard({ course }: { course: CourseSummary }) {
         <span className="rounded-md bg-indigo-50 px-2 py-1 font-mono text-xs font-semibold text-indigo-700">
           {course.code}
         </span>
-        <span className="text-xs text-slate-500">{course.semester}</span>
+        <span className="text-right text-xs text-slate-500">
+          {studyYearLabel(course.studyYear)} · {terms[course.term]}
+        </span>
       </div>
       <h3 className="mt-3 font-semibold text-slate-900">
         {/* The link covers the whole card; the join button sits above it. */}
@@ -20,11 +23,19 @@ export function CourseCard({ course }: { course: CourseSummary }) {
           {course.name}
         </Link>
       </h3>
-      <p className="mt-1 text-sm text-slate-600">{course.lecturer ?? 'Lecturer not set'}</p>
+      <p className="mt-1 text-sm text-slate-600">
+        {showProgram ? course.program.name : (course.lecturer ?? 'Lecturer not set')}
+      </p>
 
-      <div className="mt-auto flex items-center justify-between pt-5">
-        <span className="text-sm text-slate-500">
-          {course.memberCount} {course.memberCount === 1 ? 'member' : 'members'}
+      <div className="mt-auto flex items-center justify-between gap-3 pt-5">
+        <span className="flex gap-3 text-sm text-slate-500">
+          <span title="Shared materials">
+            {course.materialCount} {course.materialCount === 1 ? 'file' : 'files'}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>
+            {course.memberCount} {course.memberCount === 1 ? 'member' : 'members'}
+          </span>
         </span>
         {course.enrolled ? (
           <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700">

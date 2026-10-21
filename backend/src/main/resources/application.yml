@@ -8,6 +8,10 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
   docker:
     compose:
       # Starts the PostgreSQL container from the root compose file when running locally.
@@ -22,6 +26,9 @@ app:
     secret: ${JWT_SECRET:7tepMSjA0YEJoGFGs7SKeSjppP6CEat5QMxj5LjLDUg=}
     issuer: student-hub
     ttl: 24h
+  storage:
+    # Uploaded materials. Mount a persistent volume here in production.
+    local-dir: ${STORAGE_DIR:./data/uploads}
 
 management:
   endpoints:

@@ -25,6 +25,9 @@ services:
       SPRING_DATASOURCE_USERNAME: studenthub
       SPRING_DATASOURCE_PASSWORD: studenthub
       JWT_SECRET: ${JWT_SECRET:-7tepMSjA0YEJoGFGs7SKeSjppP6CEat5QMxj5LjLDUg=}
+      STORAGE_DIR: /app/data/uploads
+    volumes:
+      - uploads:/app/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,3 +42,4 @@ services:
 
 volumes:
   postgres-data:
+  uploads:

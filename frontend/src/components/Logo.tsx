@@ -1,19 +1,20 @@
+/** Wordmark: "SWPS" with a small "hub" tucked into the bottom-right corner. Our own design, not the university's logo. */
 export function Logo({ inverted = false }: { inverted?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2.5">
-      <svg viewBox="0 0 32 32" className="size-8" aria-hidden="true">
-        <rect width="32" height="32" rx="8" fill={inverted ? '#fff' : '#4f46e5'} />
-        <path d="M9 11.5 16 8l7 3.5-7 3.5-7-3.5Z" fill={inverted ? '#4f46e5' : '#fff'} />
-        <path
-          d="M11 14.5v4.2c0 1.6 2.2 3.3 5 3.3s5-1.7 5-3.3v-4.2"
-          fill="none"
-          stroke={inverted ? '#4f46e5' : '#fff'}
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-      <span className={`text-lg font-semibold tracking-tight ${inverted ? 'text-white' : 'text-slate-900'}`}>
-        Student Hub
+    <span className="inline-flex items-end select-none" aria-label="SWPS Hub">
+      <span
+        aria-hidden="true"
+        className={`text-[1.65rem] leading-none font-black tracking-[-0.04em] ${inverted ? 'text-white' : 'text-indigo-700'}`}
+      >
+        SWPS
+      </span>
+      <span
+        aria-hidden="true"
+        className={`mb-[1px] ml-0.5 rounded px-1 py-px text-[10px] leading-none font-bold tracking-wide lowercase ${
+          inverted ? 'bg-white/15 text-indigo-100' : 'bg-indigo-100 text-indigo-600'
+        }`}
+      >
+        hub
       </span>
     </span>
   )

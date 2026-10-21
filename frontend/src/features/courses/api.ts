@@ -1,18 +1,23 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import type { CourseDetail, CourseEvent, CourseSummary, EventType, Page } from '../../lib/types'
+import type { CourseDetail, CourseEvent, CourseSummary, EventType, Page, Term } from '../../lib/types'
 
 export type CourseFilters = {
-  q: string
-  semester: string
-  mine: boolean
-  page: number
+  q?: string
+  /** Program slug. */
+  program?: string
+  year?: number
+  mine?: boolean
+  page?: number
+  size?: number
 }
 
 export type CourseInput = {
+  programId: string
+  studyYear: number
+  term: Term
   code: string
   name: string
-  semester: string
   lecturer: string
   description: string
 }
@@ -33,15 +38,16 @@ export const courseKeys = {
   events: (id: string) => ['courses', 'events', id] as const,
 }
 
-export function useCourses(filters: CourseFilters) {
-  const params = new URLSearchParams({ page: String(filters.page) })
-  if (filters.q) params.set('q', filters.q)
-  if (filters.semester) params.set('semester', filters.semester)
-  if (filters.mine) params.set('mine', 'true')
+export function useCourses(filters: CourseFilters, { enabled = true } = {}) {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== '' && value !== false) params.set(key, String(value))
+  }
   return useQuery({
     queryKey: courseKeys.list(filters),
     queryFn: () => api<Page<CourseSummary>>(`/courses?${params}`),
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
 
@@ -65,7 +71,11 @@ export function useSaveCourse(id?: string) {
   return useMutation({
     mutationFn: (input: CourseInput) =>
       api<CourseDetail>(id ? `/courses/${id}` : '/courses', { method: id ? 'PUT' : 'POST', body: input }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: courseKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: courseKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ['programs'] }),
+      ]),
   })
 }
 
@@ -78,6 +88,7 @@ export function useEnrollment() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: courseKeys.all }),
         queryClient.invalidateQueries({ queryKey: ['calendar'] }),
+        queryClient.invalidateQueries({ queryKey: ['materials', 'feed'] }),
       ]),
   })
 }
