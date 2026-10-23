@@ -15,7 +15,8 @@ final class AuthDtos {
     record RegisterRequest(
             @NotBlank @Email @Size(max = 255) String email,
             @NotBlank @Size(min = 8, max = 72, message = "must be between 8 and 72 characters") String password,
-            @NotBlank @Size(max = 100) String displayName) {
+            @NotBlank @Size(max = 100) String displayName,
+            @NotBlank(message = "accept the privacy policy to create an account") String privacyPolicyVersion) {
     }
 
     record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {

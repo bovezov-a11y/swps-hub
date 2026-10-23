@@ -13,6 +13,7 @@ import com.studenthub.material.MaterialDtos.Uploader;
 import com.studenthub.storage.FileStorage;
 import com.studenthub.user.User;
 import com.studenthub.user.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -43,14 +44,17 @@ class MaterialService {
     private final CourseService courseService;
     private final UserRepository users;
     private final FileStorage storage;
+    private final boolean showUploaderNames;
 
     MaterialService(MaterialRepository materials, MaterialVoteRepository votes, CourseService courseService,
-                    UserRepository users, FileStorage storage) {
+                    UserRepository users, FileStorage storage,
+                    @Value("${app.privacy.show-uploader-names}") boolean showUploaderNames) {
         this.materials = materials;
         this.votes = votes;
         this.courseService = courseService;
         this.users = users;
         this.storage = storage;
+        this.showUploaderNames = showUploaderNames;
     }
 
     @Transactional(readOnly = true)
@@ -138,18 +142,23 @@ class MaterialService {
         if (found.isEmpty()) {
             return List.of();
         }
-        Map<UUID, User> uploaders = users.findAllById(found.stream().map(Material::getUploadedBy).distinct().toList())
-                .stream().collect(Collectors.toMap(User::getId, Function.identity()));
+        // Sharing is anonymous unless configured otherwise: students only ever see their own name.
+        List<UUID> visibleUploaders = found.stream().map(Material::getUploadedBy)
+                .filter(uploader -> showUploaderNames || uploader.equals(user.id()))
+                .distinct().toList();
+        Map<UUID, User> uploaders = users.findAllById(visibleUploaders).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
         Set<UUID> voted = votes.findVotedMaterialIds(user.id(), found.stream().map(Material::getId).toList());
         return found.stream().map(material -> {
             Course course = material.getCourse();
             User uploader = uploaders.get(material.getUploadedBy());
+            boolean mine = material.getUploadedBy().equals(user.id());
             return new MaterialResponse(material.getId(), new CourseRef(course.getId(), course.getCode(), course.getName()),
                     material.getType(), material.getTitle(), material.getDescription(), material.getAcademicYear(),
                     material.getFileName(), material.getContentType(), material.getFileSize(), material.getVoteCount(),
                     voted.contains(material.getId()),
-                    new Uploader(material.getUploadedBy(), uploader == null ? "Former student" : uploader.getDisplayName()),
-                    material.getCreatedAt(), canDelete(user, material));
+                    uploader == null ? null : new Uploader(uploader.getDisplayName()),
+                    mine, material.getCreatedAt(), canDelete(user, material));
         }).toList();
     }
 

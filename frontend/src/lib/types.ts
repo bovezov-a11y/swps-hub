@@ -84,7 +84,9 @@ export type Material = {
   fileSize: number
   voteCount: number
   voted: boolean
-  uploader: { id: string; displayName: string }
+  /** Null when the uploader stays anonymous to the viewer, which is the default for other people's files. */
+  uploader: { displayName: string } | null
+  mine: boolean
   createdAt: string
   canDelete: boolean
 }

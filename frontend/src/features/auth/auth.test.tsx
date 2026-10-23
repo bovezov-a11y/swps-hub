@@ -10,10 +10,11 @@ const dashboardRoutes = {
   'GET /api/materials/feed': { body: [] },
 }
 
-async function fillRegistration(email: string) {
+async function fillRegistration(email: string, { acceptPrivacy = true } = {}) {
   await userEvent.type(await screen.findByLabelText('Full name'), 'Anna Nowak')
   await userEvent.type(screen.getByLabelText('University email'), email)
   await userEvent.type(screen.getByLabelText('Password'), 'correct-horse')
+  if (acceptPrivacy) await userEvent.click(screen.getByRole('checkbox', { name: /accept the Privacy Policy/ }))
   await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
 }
 
@@ -34,6 +35,7 @@ describe('authentication', () => {
     expect(await screen.findByText('Enter your name')).toBeInTheDocument()
     expect(screen.getByText('Enter a valid email address')).toBeInTheDocument()
     expect(screen.getByText('Use at least 8 characters')).toBeInTheDocument()
+    expect(screen.getByText('Accept the privacy policy to continue')).toBeInTheDocument()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -48,12 +50,19 @@ describe('authentication', () => {
   })
 
   it('asks new students to confirm their email after registering', async () => {
-    mockApi({ 'POST /api/auth/register': { status: 202, body: { email: 'anna@st.swps.edu.pl' } } })
+    const fetchMock = mockApi({ 'POST /api/auth/register': { status: 202, body: { email: 'anna@st.swps.edu.pl' } } })
     renderApp('/register')
 
     await fillRegistration('anna@st.swps.edu.pl')
 
     expect(await screen.findByRole('heading', { name: 'Check your inbox' })).toBeInTheDocument()
+    const [, init] = fetchMock.mock.calls.find(([url]) => url === '/api/auth/register')!
+    expect(JSON.parse(init!.body as string)).toEqual({
+      displayName: 'Anna Nowak',
+      email: 'anna@st.swps.edu.pl',
+      password: 'correct-horse',
+      privacyPolicyVersion: '1.0',
+    })
     expect(screen.getByText('anna@st.swps.edu.pl')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send a new link' })).toBeInTheDocument()
   })

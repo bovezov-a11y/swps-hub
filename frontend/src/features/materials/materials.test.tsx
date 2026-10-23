@@ -18,7 +18,8 @@ const pastExam = {
   fileSize: 1_200_000,
   voteCount: 4,
   voted: false,
-  uploader: { id: 'u2', displayName: 'Jan Kowalski' },
+  uploader: { displayName: 'Jan Kowalski' },
+  mine: false,
   createdAt: '2026-10-20T10:00:00Z',
   canDelete: false,
 }
@@ -48,6 +49,27 @@ describe('course materials', () => {
     const voteButton = within(card).getByRole('button', { name: 'Remove your upvote from Final exam 2025' })
     expect(voteButton).toHaveAttribute('aria-pressed', 'true')
     expect(voteButton).toHaveTextContent('5')
+  })
+
+  it('keeps other students anonymous', async () => {
+    signIn()
+    mockApi({
+      'GET /api/users/me': { body: anna },
+      [`GET /api/courses/${statistics.id}`]: { body: courseDetail },
+      [`GET /api/courses/${statistics.id}/materials`]: {
+        body: [
+          { ...pastExam, uploader: null },
+          { ...pastExam, id: 'm2', title: 'My notes', uploader: { displayName: 'Anna Nowak' }, mine: true },
+        ],
+      },
+    })
+    renderApp(`/courses/${statistics.id}`)
+
+    const theirs = (await screen.findByRole('heading', { name: 'Final exam 2025' })).closest('li')!
+    const mine = screen.getByRole('heading', { name: 'My notes' }).closest('li')!
+    expect(within(theirs).getByText('a student')).toBeInTheDocument()
+    expect(within(mine).getByText('you')).toBeInTheDocument()
+    expect(screen.queryByText('Anna Nowak')).not.toBeInTheDocument()
   })
 
   it('uploads a file with a title suggested from its name', async () => {

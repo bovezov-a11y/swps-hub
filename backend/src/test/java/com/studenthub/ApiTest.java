@@ -45,7 +45,8 @@ public abstract class ApiTest {
         mvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                        {"email": "%s", "password": "correct-horse", "displayName": "Test Student"}
+                        {"email": "%s", "password": "correct-horse", "displayName": "Test Student",
+                         "privacyPolicyVersion": "1.0"}
                         """.formatted(email))
                 .exchange();
         String body = body(verifyEmail(verificationToken(email)));

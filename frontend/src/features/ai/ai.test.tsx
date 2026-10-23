@@ -18,7 +18,8 @@ const pastExam = {
   fileSize: 1_200_000,
   voteCount: 0,
   voted: false,
-  uploader: { id: 'u2', displayName: 'Jan Kowalski' },
+  uploader: null,
+  mine: false,
   createdAt: '2026-10-20T10:00:00Z',
   canDelete: false,
 }

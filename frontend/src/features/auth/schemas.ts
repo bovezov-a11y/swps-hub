@@ -26,6 +26,7 @@ export const registerSchema = z.object({
     .string()
     .min(8, { error: 'Use at least 8 characters' })
     .max(72, { error: 'Use at most 72 characters' }),
+  acceptPrivacy: z.boolean().refine((accepted) => accepted, { error: 'Accept the privacy policy to continue' }),
 })
 
 export type LoginInput = z.infer<typeof loginSchema>

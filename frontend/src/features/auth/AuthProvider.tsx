@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { privacyPolicy } from '../../content/privacy-policy'
 import { api, onUnauthorized } from '../../lib/api'
 import { sessionStore } from '../../lib/session'
 import type { AuthResponse, User } from '../../lib/types'
@@ -46,11 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [startSession],
   )
 
-  const register = useCallback(
-    async (input: RegisterInput) =>
-      (await api<{ email: string }>('/auth/register', { method: 'POST', body: input })).email,
-    [],
-  )
+  const register = useCallback(async ({ displayName, email, password }: RegisterInput) => {
+    const body = { displayName, email, password, privacyPolicyVersion: privacyPolicy.version }
+    return (await api<{ email: string }>('/auth/register', { method: 'POST', body })).email
+  }, [])
 
   const verifyEmail = useCallback(
     async (token: string) =>

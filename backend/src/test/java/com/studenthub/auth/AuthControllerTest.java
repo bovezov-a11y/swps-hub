@@ -36,6 +36,22 @@ class AuthControllerTest extends ApiTest {
     }
 
     @Test
+    void registerRequiresAcceptingTheCurrentPrivacyPolicy() {
+        MvcTestResult missing = mvc.post().uri("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"email": "%s", "password": "correct-horse", "displayName": "Anna Nowak"}
+                        """.formatted(uniqueEmail()))
+                .exchange();
+        assertThat(missing).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(missing).bodyJson().extractingPath("$.errors.privacyPolicyVersion").isNotNull();
+
+        MvcTestResult outdated = registerRequest(uniqueEmail(), "correct-horse", "Anna Nowak", "0.9");
+        assertThat(outdated).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(outdated).bodyJson().extractingPath("$.errors.privacyPolicyVersion").asString().contains("updated");
+    }
+
+    @Test
     void confirmingTheEmailLogsTheUserInOnce() {
         String email = uniqueEmail();
         registerRequest(email, "correct-horse", "Anna Nowak");
@@ -115,11 +131,15 @@ class AuthControllerTest extends ApiTest {
     }
 
     private MvcTestResult registerRequest(String email, String password, String displayName) {
+        return registerRequest(email, password, displayName, "1.0");
+    }
+
+    private MvcTestResult registerRequest(String email, String password, String displayName, String policyVersion) {
         return mvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                        {"email": "%s", "password": "%s", "displayName": "%s"}
-                        """.formatted(email, password, displayName))
+                        {"email": "%s", "password": "%s", "displayName": "%s", "privacyPolicyVersion": "%s"}
+                        """.formatted(email, password, displayName, policyVersion))
                 .exchange();
     }
 

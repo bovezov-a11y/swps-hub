@@ -55,7 +55,11 @@ export function MaterialCard({ material, onVote, onDelete, onStudy }: MaterialCa
         )}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
           <span>
-            Shared by <span className="font-medium text-slate-700">{material.uploader.displayName}</span> ·{' '}
+            Shared by{' '}
+            <span className="font-medium text-slate-700">
+              {material.mine ? 'you' : (material.uploader?.displayName ?? 'a student')}
+            </span>{' '}
+            ·{' '}
             {relativeDay(material.createdAt).toLowerCase()}
           </span>
           <button

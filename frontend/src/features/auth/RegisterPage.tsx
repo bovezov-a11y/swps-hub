@@ -6,6 +6,7 @@ import { Link } from 'react-router'
 import { Button } from '../../components/Button'
 import { FormAlert } from '../../components/FormAlert'
 import { TextField } from '../../components/fields'
+import { ApiError } from '../../lib/api'
 import { applyServerErrors } from '../../lib/form-errors'
 import { useAuth } from './auth-context'
 import { ResendLinkButton } from './ResendLinkButton'
@@ -19,12 +20,16 @@ export function RegisterPage() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) })
+  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema), defaultValues: { acceptPrivacy: false } })
 
   const onSubmit = handleSubmit(async (values) => {
     try {
       setSentTo(await createAccount(values))
     } catch (error) {
+      if (error instanceof ApiError && error.fieldErrors.privacyPolicyVersion) {
+        setError('acceptPrivacy', { message: 'The privacy policy was updated. Reload the page and accept the new version.' })
+        return
+      }
       applyServerErrors(error, ['displayName', 'email', 'password'], setError)
     }
   })
@@ -62,6 +67,24 @@ export function RegisterPage() {
           error={errors.password?.message}
           {...register('password')}
         />
+        <div>
+          <label className="flex items-start gap-3 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 rounded border-slate-300 accent-indigo-600"
+              aria-invalid={errors.acceptPrivacy ? true : undefined}
+              {...register('acceptPrivacy')}
+            />
+            <span>
+              I have read and accept the{' '}
+              <Link to="/privacy" target="_blank" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                Privacy Policy
+              </Link>
+              . Files I share are anonymous to other students.
+            </span>
+          </label>
+          {errors.acceptPrivacy && <p className="mt-1.5 text-sm text-red-600">{errors.acceptPrivacy.message}</p>}
+        </div>
         <Button type="submit" isLoading={isSubmitting} className="w-full">
           Create account
         </Button>

@@ -11,6 +11,7 @@ import com.studenthub.user.Role;
 import com.studenthub.user.User;
 import com.studenthub.user.UserRepository;
 import com.studenthub.user.UserResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,15 +31,18 @@ class AuthService {
     private final TokenService tokenService;
     private final EmailVerificationService verification;
     private final RegistrationProperties registration;
+    private final String privacyPolicyVersion;
 
     AuthService(UserRepository users, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
-                TokenService tokenService, EmailVerificationService verification, RegistrationProperties registration) {
+                TokenService tokenService, EmailVerificationService verification, RegistrationProperties registration,
+                @Value("${app.privacy.policy-version}") String privacyPolicyVersion) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenService = tokenService;
         this.verification = verification;
         this.registration = registration;
+        this.privacyPolicyVersion = privacyPolicyVersion;
     }
 
     @Transactional
@@ -47,6 +51,11 @@ class AuthService {
         if (!isUniversityEmail(email)) {
             throw new InvalidRequestException("email",
                     "use your SWPS university email (@" + registration.allowedEmailDomains().getFirst() + ")");
+        }
+        if (!privacyPolicyVersion.equals(request.privacyPolicyVersion())) {
+            // The page was loaded before the policy changed; the user must read and accept the current one.
+            throw new InvalidRequestException("privacyPolicyVersion",
+                    "the privacy policy has been updated; reload the page and accept the current version");
         }
         Optional<User> existing = users.findByEmail(email);
         if (existing.isPresent()) {
@@ -57,8 +66,10 @@ class AuthService {
             verification.sendLink(existing.get());
             return new RegistrationResponse(email);
         }
-        User user = users.save(new User(email, passwordEncoder.encode(request.password()),
-                request.displayName().strip(), Role.STUDENT));
+        User user = new User(email, passwordEncoder.encode(request.password()), request.displayName().strip(),
+                Role.STUDENT);
+        user.acceptPrivacyPolicy(privacyPolicyVersion);
+        users.save(user);
         verification.sendLink(user);
         return new RegistrationResponse(email);
     }

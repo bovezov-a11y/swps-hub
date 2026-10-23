@@ -29,11 +29,16 @@ class MaterialControllerTest extends ApiTest {
         assertThat(upload).bodyJson().extractingPath("$.fileName").isEqualTo("exam 2025.pdf");
         assertThat(upload).bodyJson().extractingPath("$.contentType").isEqualTo("application/pdf");
         assertThat(upload).bodyJson().extractingPath("$.uploader.displayName").isEqualTo("Test Student");
+        assertThat(upload).bodyJson().extractingPath("$.mine").isEqualTo(true);
         assertThat(upload).bodyJson().extractingPath("$.canDelete").isEqualTo(true);
         String materialId = JsonPath.read(body(upload), "$.id");
 
-        assertThat(get(author, "/api/courses/" + courseId + "/materials"))
-                .bodyJson().extractingPath("$[0].canDelete").isEqualTo(false);
+        // Sharing is anonymous: other students cannot see who uploaded the file.
+        MvcTestResult seenByOthers = get(author, "/api/courses/" + courseId + "/materials");
+        assertThat(seenByOthers).bodyJson().extractingPath("$[0].uploader").isNull();
+        assertThat(seenByOthers).bodyJson().extractingPath("$[0].mine").isEqualTo(false);
+        assertThat(seenByOthers).bodyJson().extractingPath("$[0].canDelete").isEqualTo(false);
+        assertThat(body(seenByOthers)).doesNotContain(classmate.id());
         assertThat(get(author, "/api/courses/" + courseId)).bodyJson().extractingPath("$.materialCount").isEqualTo(1);
 
         MvcTestResult download = get(author, "/api/materials/" + materialId + "/file");

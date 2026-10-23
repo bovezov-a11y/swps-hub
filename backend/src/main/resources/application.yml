@@ -47,6 +47,12 @@ app:
     model: claude-opus-5-5
     daily-limit: 20
     max-file-size: 20MB
+  privacy:
+    # Version of the privacy policy users accept at sign-up. Change it together with
+    # frontend/src/content/privacy-policy.ts whenever the policy text changes.
+    policy-version: "1.0"
+    # Whether students see who shared a material. Off by default, so sharing is anonymous.
+    show-uploader-names: ${SHOW_UPLOADER_NAMES:false}
   storage:
     # Uploaded materials. Mount a persistent volume here in production.
     local-dir: ${STORAGE_DIR:./data/uploads}

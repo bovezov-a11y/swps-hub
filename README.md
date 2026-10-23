@@ -24,6 +24,7 @@ An unofficial platform for SWPS University students: course schedules, an exam c
 
 ### Phase 3 – Trust and AI study tools ✅
 - Sign-up limited to SWPS addresses (`@st.swps.edu.pl`, `@swps.edu.pl`) with one-time email confirmation links
+- Privacy by default: shared files are anonymous, other students only ever see totals, and a versioned privacy policy is accepted at sign-up
 - AI summaries and practice quizzes for shared PDFs, images and text files, generated with Claude, stored once and shared by every student, with a daily limit per student
 
 ### Next
@@ -131,9 +132,14 @@ API documentation (Swagger UI): http://localhost:8080/swagger-ui.html
 | `JWT_SECRET` | random per start | Base64 key (at least 256 bits) that signs login tokens. **Required in production**; create one with `openssl rand -base64 32`. |
 | `STORAGE_DIR` | `./data/uploads` | Where uploaded materials are stored. |
 | `ANTHROPIC_API_KEY` | unset | Turns on AI summaries and quizzes. Without it the AI buttons are hidden. |
+| `SHOW_UPLOADER_NAMES` | `false` | Show other students who shared each file. Off keeps sharing anonymous. |
 | `PUBLIC_URL` | `http://localhost:5173` | Base URL of the web app, used in email links. |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | local Mailpit | SMTP server for confirmation emails. |
 | `SPRING_DATASOURCE_URL`, `_USERNAME`, `_PASSWORD` | local Docker database | PostgreSQL connection. |
+
+### Updating the privacy policy
+
+The policy text lives in [`frontend/src/content/privacy-policy.ts`](frontend/src/content/privacy-policy.ts). To change it, edit the text, raise its `version` and `lastUpdated`, and set the same version in `app.privacy.policy-version` in `backend/src/main/resources/application.yml`. Every account stores the version it accepted.
 
 ### Tests
 

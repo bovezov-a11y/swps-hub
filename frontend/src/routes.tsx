@@ -13,6 +13,7 @@ import { ExplorePage } from './features/programs/ExplorePage'
 import { ProgramPage } from './features/programs/ProgramPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 
 export const routes: RouteObject[] = [
   {
@@ -47,5 +48,6 @@ export const routes: RouteObject[] = [
       },
     ],
   },
+  { path: '/privacy', element: <PrivacyPage /> },
   { path: '*', element: <NotFoundPage /> },
 ]

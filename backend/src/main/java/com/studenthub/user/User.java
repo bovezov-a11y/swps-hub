@@ -42,6 +42,12 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
+    @Column(name = "privacy_policy_version", length = 20)
+    private String privacyPolicyVersion;
+
+    @Column(name = "privacy_policy_accepted_at")
+    private Instant privacyPolicyAcceptedAt;
+
     protected User() {
     }
 
@@ -91,5 +97,14 @@ public class User {
 
     public void markEmailVerified() {
         this.emailVerified = true;
+    }
+
+    public String getPrivacyPolicyVersion() {
+        return privacyPolicyVersion;
+    }
+
+    public void acceptPrivacyPolicy(String version) {
+        this.privacyPolicyVersion = version;
+        this.privacyPolicyAcceptedAt = Instant.now();
     }
 }

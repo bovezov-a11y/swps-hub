@@ -21,7 +21,7 @@ final class MaterialDtos {
             @NotBlank @Pattern(regexp = "^\\d{4}/\\d{2}$", message = "must look like 2025/26") String academicYear) {
     }
 
-    record Uploader(UUID id, String displayName) {
+    record Uploader(String displayName) {
     }
 
     record CourseRef(UUID id, String code, String name) {
@@ -29,6 +29,6 @@ final class MaterialDtos {
 
     record MaterialResponse(UUID id, CourseRef course, MaterialType type, String title, String description,
                             String academicYear, String fileName, String contentType, long fileSize, int voteCount,
-                            boolean voted, Uploader uploader, Instant createdAt, boolean canDelete) {
+                            boolean voted, Uploader uploader, boolean mine, Instant createdAt, boolean canDelete) {
     }
 }
