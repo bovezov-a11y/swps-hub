@@ -48,8 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (input: RegisterInput) =>
-      startSession(await api<AuthResponse>('/auth/register', { method: 'POST', body: input })),
+      (await api<{ email: string }>('/auth/register', { method: 'POST', body: input })).email,
+    [],
+  )
+
+  const verifyEmail = useCallback(
+    async (token: string) =>
+      startSession(await api<AuthResponse>('/auth/verify-email', { method: 'POST', body: { token } })),
     [startSession],
+  )
+
+  const resendVerification = useCallback(
+    (email: string) => api<void>('/auth/resend-verification', { method: 'POST', body: { email } }),
+    [],
   )
 
   const value = useMemo<AuthContextValue>(
@@ -58,9 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading: session !== null && currentUser.isPending,
       login,
       register,
+      verifyEmail,
+      resendVerification,
       logout,
     }),
-    [session, currentUser.data, currentUser.isPending, login, register, logout],
+    [session, currentUser.data, currentUser.isPending, login, register, verifyEmail, resendVerification, logout],
   )
 
   return <AuthContext value={value}>{children}</AuthContext>

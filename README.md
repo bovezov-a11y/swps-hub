@@ -22,6 +22,10 @@ An unofficial platform for SWPS University students: course schedules, an exam c
 - Filter by type and year, sort by most helpful or newest, one upvote per student
 - Dashboard feed of new materials in your courses
 
+### Phase 3 – Trust and AI study tools ✅
+- Sign-up limited to SWPS addresses (`@st.swps.edu.pl`, `@swps.edu.pl`) with one-time email confirmation links
+- AI summaries and practice quizzes for shared PDFs, images and text files, generated with Claude, stored once and shared by every student, with a daily limit per student
+
 ### Next
 - Comments on materials, reporting and moderation
 - S3-compatible object storage for uploads
@@ -38,6 +42,7 @@ An unofficial platform for SWPS University students: course schedules, an exam c
 |----------|------------|
 | Backend  | Java 25, Spring Boot, Spring Security (JWT), Spring Data JPA, Flyway, springdoc-openapi |
 | Storage  | Local disk behind a `FileStorage` interface (swappable for S3) |
+| AI       | Claude (`claude-opus-5-5`) via the Anthropic Java SDK, structured outputs |
 | Database | PostgreSQL |
 | Frontend | React, TypeScript, Vite, TanStack Query, React Router, Tailwind CSS |
 | Testing  | JUnit 5, Testcontainers, Vitest, React Testing Library |
@@ -105,7 +110,7 @@ Requirements: Docker, plus Java 25 and Node.js 24 for local development.
 docker compose --profile app up --build
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000. Emails the app sends (such as confirmation links) land in Mailpit at http://localhost:8025.
 
 ### Local development
 
@@ -125,6 +130,9 @@ API documentation (Swagger UI): http://localhost:8080/swagger-ui.html
 |----------|---------|---------|
 | `JWT_SECRET` | random per start | Base64 key (at least 256 bits) that signs login tokens. **Required in production**; create one with `openssl rand -base64 32`. |
 | `STORAGE_DIR` | `./data/uploads` | Where uploaded materials are stored. |
+| `ANTHROPIC_API_KEY` | unset | Turns on AI summaries and quizzes. Without it the AI buttons are hidden. |
+| `PUBLIC_URL` | `http://localhost:5173` | Base URL of the web app, used in email links. |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | local Mailpit | SMTP server for confirmation emails. |
 | `SPRING_DATASOURCE_URL`, `_USERNAME`, `_PASSWORD` | local Docker database | PostgreSQL connection. |
 
 ### Tests

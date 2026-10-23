@@ -21,6 +21,16 @@ final class AuthDtos {
     record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {
     }
 
+    record VerifyEmailRequest(@NotBlank String token) {
+    }
+
+    record ResendVerificationRequest(@NotBlank @Email String email) {
+    }
+
+    /** Registration does not log the user in; they confirm their address first. */
+    record RegistrationResponse(String email) {
+    }
+
     record AuthResponse(String token, Instant expiresAt, UserResponse user) {
     }
 }

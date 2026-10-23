@@ -3,11 +3,15 @@ package com.studenthub.auth;
 import com.studenthub.auth.AuthDtos.AuthResponse;
 import com.studenthub.auth.AuthDtos.LoginRequest;
 import com.studenthub.auth.AuthDtos.RegisterRequest;
+import com.studenthub.auth.AuthDtos.RegistrationResponse;
+import com.studenthub.common.CodedException;
 import com.studenthub.common.ConflictException;
+import com.studenthub.common.InvalidRequestException;
 import com.studenthub.user.Role;
 import com.studenthub.user.User;
 import com.studenthub.user.UserRepository;
 import com.studenthub.user.UserResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 class AuthService {
@@ -23,31 +28,75 @@ class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
+    private final EmailVerificationService verification;
+    private final RegistrationProperties registration;
 
-    AuthService(UserRepository users, PasswordEncoder passwordEncoder,
-                AuthenticationManager authenticationManager, TokenService tokenService) {
+    AuthService(UserRepository users, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
+                TokenService tokenService, EmailVerificationService verification, RegistrationProperties registration) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenService = tokenService;
+        this.verification = verification;
+        this.registration = registration;
     }
 
     @Transactional
-    AuthResponse register(RegisterRequest request) {
+    RegistrationResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.email());
-        if (users.existsByEmail(email)) {
-            throw new ConflictException("An account with this email already exists");
+        if (!isUniversityEmail(email)) {
+            throw new InvalidRequestException("email",
+                    "use your SWPS university email (@" + registration.allowedEmailDomains().getFirst() + ")");
+        }
+        Optional<User> existing = users.findByEmail(email);
+        if (existing.isPresent()) {
+            if (existing.get().isEmailVerified()) {
+                throw new ConflictException("An account with this email already exists");
+            }
+            // Someone registered but never confirmed: send them a fresh link instead of an error.
+            verification.sendLink(existing.get());
+            return new RegistrationResponse(email);
         }
         User user = users.save(new User(email, passwordEncoder.encode(request.password()),
                 request.displayName().strip(), Role.STUDENT));
+        verification.sendLink(user);
+        return new RegistrationResponse(email);
+    }
+
+    @Transactional
+    AuthResponse verifyEmail(String token) {
+        User user = verification.consume(token)
+                .flatMap(users::findById)
+                .orElseThrow(() -> new CodedException(HttpStatus.BAD_REQUEST, "INVALID_VERIFICATION_TOKEN",
+                        "This confirmation link is invalid or has expired. Request a new one."));
+        user.markEmailVerified();
         return toResponse(user);
+    }
+
+    /** Always succeeds, so the endpoint cannot be used to find out which addresses have accounts. */
+    @Transactional
+    void resendVerification(String email) {
+        users.findByEmail(normalizeEmail(email))
+                .filter(user -> !user.isEmailVerified())
+                .ifPresent(verification::sendLink);
     }
 
     @Transactional(readOnly = true)
     AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
+        // The password is checked first, so the verification state is only revealed to the account owner.
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
-        return toResponse(users.findByEmail(email).orElseThrow());
+        User user = users.findByEmail(email).orElseThrow();
+        if (!user.isEmailVerified()) {
+            throw new CodedException(HttpStatus.FORBIDDEN, "EMAIL_NOT_VERIFIED",
+                    "Confirm your email address first. We sent you a link when you registered.");
+        }
+        return toResponse(user);
+    }
+
+    private boolean isUniversityEmail(String email) {
+        String domain = email.substring(email.lastIndexOf('@') + 1);
+        return registration.allowedEmailDomains().stream().anyMatch(domain::equalsIgnoreCase);
     }
 
     private AuthResponse toResponse(User user) {

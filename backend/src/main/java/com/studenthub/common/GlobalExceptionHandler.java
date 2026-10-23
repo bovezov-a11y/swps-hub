@@ -37,6 +37,13 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
+    @ExceptionHandler(CodedException.class)
+    ProblemDetail handleCoded(CodedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
+        problem.setProperty("code", ex.getCode());
+        return problem;
+    }
+
     @ExceptionHandler(InvalidRequestException.class)
     ProblemDetail handleInvalidRequest(InvalidRequestException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");

@@ -13,32 +13,61 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Base class for API tests: a full application context on a real PostgreSQL, plus helpers for authenticated calls.
  * Tests share one database, so they create their own users and unique names instead of relying on a clean state.
  */
-@SpringBootTest(properties = "app.storage.local-dir=target/test-uploads")
+@SpringBootTest(properties = {"app.storage.local-dir=target/test-uploads", "app.ai.daily-limit=3"})
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestDoubles.class})
 public abstract class ApiTest {
+
+    private static final Pattern VERIFICATION_TOKEN = Pattern.compile("verify-email\\?token=([A-Za-z0-9_-]+)");
 
     @Autowired
     protected MockMvcTester mvc;
 
+    @Autowired
+    protected TestDoubles.RecordingEmailSender emails;
+
+    @Autowired
+    protected TestDoubles.FakeStudyAssistant studyAssistant;
+
     protected record TestUser(String id, String email, String token) {
     }
 
+    /** Registers a student and confirms their email through the link they were sent, the way a real user would. */
     protected TestUser registerUser() {
-        String email = "student-" + UUID.randomUUID() + "@swps.edu.pl";
-        MvcTestResult result = mvc.post().uri("/api/auth/register")
+        String email = "student-" + UUID.randomUUID() + "@st.swps.edu.pl";
+        mvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"email": "%s", "password": "correct-horse", "displayName": "Test Student"}
                         """.formatted(email))
                 .exchange();
-        String body = body(result);
+        String body = body(verifyEmail(verificationToken(email)));
         return new TestUser(JsonPath.read(body, "$.user.id"), email, JsonPath.read(body, "$.token"));
+    }
+
+    protected String verificationToken(String email) {
+        String message = emails.lastEmailTo(email).orElseThrow(() -> new AssertionError("No email sent to " + email));
+        Matcher matcher = VERIFICATION_TOKEN.matcher(message);
+        if (!matcher.find()) {
+            throw new AssertionError("No verification link in: " + message);
+        }
+        return matcher.group(1);
+    }
+
+    protected MvcTestResult verifyEmail(String token) {
+        return mvc.post().uri("/api/auth/verify-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"token": "%s"}
+                        """.formatted(token))
+                .exchange();
     }
 
     protected MvcTestResult get(TestUser user, String uri) {

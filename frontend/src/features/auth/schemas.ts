@@ -7,13 +7,21 @@ export const loginSchema = z.object({
   password: z.string().min(1, { error: 'Enter your password' }),
 })
 
+/** Same list as the backend: only university addresses can sign up. */
+export const universityDomains = ['st.swps.edu.pl', 'swps.edu.pl']
+
+const universityEmail = email.refine(
+  (value) => universityDomains.includes(value.split('@').pop()?.toLowerCase() ?? ''),
+  { error: `Use your SWPS university email (@${universityDomains[0]})` },
+)
+
 export const registerSchema = z.object({
   displayName: z
     .string()
     .trim()
     .min(1, { error: 'Enter your name' })
     .max(100, { error: 'Name can be at most 100 characters' }),
-  email,
+  email: universityEmail,
   password: z
     .string()
     .min(8, { error: 'Use at least 8 characters' })

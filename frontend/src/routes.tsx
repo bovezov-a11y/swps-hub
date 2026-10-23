@@ -4,6 +4,7 @@ import { AuthLayout } from './components/AuthLayout'
 import { GuestOnly, RequireAuth } from './components/route-guards'
 import { LoginPage } from './features/auth/LoginPage'
 import { RegisterPage } from './features/auth/RegisterPage'
+import { VerifyEmailPage } from './features/auth/VerifyEmailPage'
 import { CalendarPage } from './features/calendar/CalendarPage'
 import { CourseDetailPage } from './features/courses/CourseDetailPage'
 import { CourseFormPage } from './features/courses/CourseFormPage'
@@ -22,6 +23,7 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/login', element: <LoginPage /> },
           { path: '/register', element: <RegisterPage /> },
+          { path: '/verify-email', element: <VerifyEmailPage /> },
         ],
       },
     ],

@@ -17,6 +17,13 @@ services:
       timeout: 3s
       retries: 10
 
+  # Catches every email the app sends during development; inbox at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   backend:
     profiles: [app]
     build: ./backend
@@ -27,11 +34,17 @@ services:
       # Optional locally; without it the backend uses a random key per start.
       JWT_SECRET: ${JWT_SECRET:-}
       STORAGE_DIR: /app/data/uploads
+      MAIL_HOST: mailpit
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      # Optional: enables AI summaries and quizzes. Put it in a git-ignored .env file next to this one.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - uploads:/app/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   frontend:
     profiles: [app]

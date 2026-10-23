@@ -39,6 +39,9 @@ public class User {
     @Column(name = "calendar_token", unique = true, length = 64)
     private String calendarToken;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
     protected User() {
     }
 
@@ -80,5 +83,13 @@ public class User {
 
     public void setCalendarToken(String calendarToken) {
         this.calendarToken = calendarToken;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void markEmailVerified() {
+        this.emailVerified = true;
     }
 }

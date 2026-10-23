@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface MaterialRepository extends JpaRepository<Material, UUID> {
@@ -17,6 +18,9 @@ public interface MaterialRepository extends JpaRepository<Material, UUID> {
               and (:academicYear is null or m.academicYear = :academicYear)
             """)
     List<Material> findForCourse(UUID courseId, MaterialType type, String academicYear, Pageable pageable);
+
+    @Query("select m from Material m join fetch m.course where m.id = :id")
+    Optional<Material> findWithCourseById(UUID id);
 
     /** Newest materials across every course the user joined, with their course loaded. */
     @Query("""

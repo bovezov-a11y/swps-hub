@@ -6,7 +6,10 @@ export type AuthContextValue = {
   user: User | null
   isLoading: boolean
   login: (input: LoginInput) => Promise<void>
-  register: (input: RegisterInput) => Promise<void>
+  /** Creates the account and resolves with the address the confirmation link was sent to. */
+  register: (input: RegisterInput) => Promise<string>
+  verifyEmail: (token: string) => Promise<void>
+  resendVerification: (email: string) => Promise<void>
   logout: () => void
 }
 

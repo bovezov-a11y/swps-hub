@@ -1,4 +1,4 @@
-import { ArrowBigUp, Download, ExternalLink, Trash2 } from 'lucide-react'
+import { ArrowBigUp, Download, ExternalLink, Sparkles, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { formatFileSize, materialTypes } from '../../lib/academic'
 import { relativeDay } from '../../lib/dates'
@@ -10,9 +10,11 @@ type MaterialCardProps = {
   material: Material
   onVote: (voted: boolean) => void
   onDelete: () => void
+  /** Opens AI study tools; omitted when they are unavailable for this file. */
+  onStudy?: () => void
 }
 
-export function MaterialCard({ material, onVote, onDelete }: MaterialCardProps) {
+export function MaterialCard({ material, onVote, onDelete, onStudy }: MaterialCardProps) {
   const [openError, setOpenError] = useState(false)
   const kind = fileKind(material.fileName)
   const { label, badge } = materialTypes[material.type]
@@ -65,6 +67,16 @@ export function MaterialCard({ material, onVote, onDelete }: MaterialCardProps) 
             {preview ? 'Open' : 'Download'}
             <span className="font-normal text-slate-400">· {formatFileSize(material.fileSize)}</span>
           </button>
+          {onStudy && (
+            <button
+              type="button"
+              onClick={onStudy}
+              className="inline-flex items-center gap-1 rounded-full bg-linear-to-r from-indigo-600 to-violet-600 px-2.5 py-1 font-semibold text-white shadow-sm transition hover:shadow-glow"
+            >
+              <Sparkles className="size-3.5" aria-hidden="true" />
+              Summary &amp; quiz
+            </button>
+          )}
           {material.canDelete && (
             <button
               type="button"

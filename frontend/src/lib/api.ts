@@ -6,17 +6,21 @@ type ProblemDetail = {
   title?: string
   detail?: string
   errors?: Record<string, string>
+  /** Machine-readable reason for errors the UI reacts to, e.g. EMAIL_NOT_VERIFIED. */
+  code?: string
 }
 
 export class ApiError extends Error {
   readonly status: number
   readonly fieldErrors: Record<string, string>
+  readonly code: string | undefined
 
-  constructor(status: number, message: string, fieldErrors: Record<string, string> = {}) {
+  constructor(status: number, message: string, fieldErrors: Record<string, string> = {}, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.fieldErrors = fieldErrors
+    this.code = code
   }
 }
 
@@ -65,6 +69,7 @@ async function send(path: string, { method = 'GET', body }: RequestOptions, acce
       response.status,
       problem?.detail ?? problem?.title ?? 'Something went wrong. Please try again.',
       problem?.errors,
+      problem?.code,
     )
   }
   return response

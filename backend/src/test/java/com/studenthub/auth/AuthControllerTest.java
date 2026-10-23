@@ -15,24 +15,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AuthControllerTest extends ApiTest {
 
     @Test
-    void registerCreatesStudentAccountAndReturnsToken() {
+    void registerCreatesAnUnverifiedAccountAndEmailsALink() {
         String email = uniqueEmail();
 
         MvcTestResult result = registerRequest(email.toUpperCase(), "correct-horse", "Anna Nowak");
 
-        assertThat(result).hasStatus(HttpStatus.CREATED);
-        assertThat(result).bodyJson().extractingPath("$.token").asString().isNotBlank();
-        assertThat(result).bodyJson().extractingPath("$.user.email").isEqualTo(email);
-        assertThat(result).bodyJson().extractingPath("$.user.displayName").isEqualTo("Anna Nowak");
-        assertThat(result).bodyJson().extractingPath("$.user.role").isEqualTo("STUDENT");
+        assertThat(result).hasStatus(HttpStatus.ACCEPTED);
+        assertThat(result).bodyJson().extractingPath("$.email").isEqualTo(email);
+        assertThat(body(result)).doesNotContain("token");
+        assertThat(emails.lastEmailTo(email)).hasValueSatisfying(message ->
+                assertThat(message).contains("Anna Nowak", "/verify-email?token="));
     }
 
     @Test
-    void registerRejectsDuplicateEmail() {
+    void registerOnlyAcceptsUniversityEmails() {
+        MvcTestResult result = registerRequest("anna@gmail.com", "correct-horse", "Anna Nowak");
+
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(result).bodyJson().extractingPath("$.errors.email").asString().contains("st.swps.edu.pl");
+    }
+
+    @Test
+    void confirmingTheEmailLogsTheUserInOnce() {
+        String email = uniqueEmail();
+        registerRequest(email, "correct-horse", "Anna Nowak");
+        String token = verificationToken(email);
+
+        MvcTestResult verified = verifyEmail(token);
+        assertThat(verified).hasStatus(HttpStatus.OK);
+        assertThat(verified).bodyJson().extractingPath("$.user.email").isEqualTo(email);
+        assertThat(verified).bodyJson().extractingPath("$.token").asString().isNotBlank();
+
+        MvcTestResult reused = verifyEmail(token);
+        assertThat(reused).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(reused).bodyJson().extractingPath("$.code").isEqualTo("INVALID_VERIFICATION_TOKEN");
+    }
+
+    @Test
+    void unverifiedUsersCannotLogInButLearnWhyOnlyWithTheRightPassword() {
         String email = uniqueEmail();
         registerRequest(email, "correct-horse", "Anna Nowak");
 
-        assertThat(registerRequest(email, "another-password", "Someone Else")).hasStatus(HttpStatus.CONFLICT);
+        MvcTestResult login = login(email, "correct-horse");
+        assertThat(login).hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(login).bodyJson().extractingPath("$.code").isEqualTo("EMAIL_NOT_VERIFIED");
+        assertThat(login(email, "wrong-password")).hasStatus(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void registerRejectsAnEmailThatIsAlreadyVerified() {
+        TestUser existing = registerUser();
+
+        assertThat(registerRequest(existing.email(), "another-password", "Someone Else"))
+                .hasStatus(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void resendingNeverRevealsWhetherAnAccountExists() {
+        MvcTestResult result = mvc.post().uri("/api/auth/resend-verification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"email": "nobody-%s@st.swps.edu.pl"}
+                        """.formatted(UUID.randomUUID()))
+                .exchange();
+
+        assertThat(result).hasStatus(HttpStatus.ACCEPTED);
     }
 
     @Test
@@ -46,24 +93,20 @@ class AuthControllerTest extends ApiTest {
 
     @Test
     void loginReturnsTokenThatAuthenticatesRequests() throws Exception {
-        String email = uniqueEmail();
-        registerRequest(email, "correct-horse", "Anna Nowak");
+        TestUser user = registerUser();
 
-        MvcTestResult login = login(email, "correct-horse");
+        MvcTestResult login = login(user.email(), "correct-horse");
         assertThat(login).hasStatus(HttpStatus.OK);
         String token = JsonPath.read(login.getResponse().getContentAsString(), "$.token");
 
         assertThat(mvc.get().uri("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .hasStatus(HttpStatus.OK)
-                .bodyJson().extractingPath("$.email").isEqualTo(email);
+                .bodyJson().extractingPath("$.email").isEqualTo(user.email());
     }
 
     @Test
     void loginRejectsWrongPassword() {
-        String email = uniqueEmail();
-        registerRequest(email, "correct-horse", "Anna Nowak");
-
-        assertThat(login(email, "wrong-password")).hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(login(registerUser().email(), "wrong-password")).hasStatus(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
@@ -90,6 +133,6 @@ class AuthControllerTest extends ApiTest {
     }
 
     private static String uniqueEmail() {
-        return "student-" + UUID.randomUUID() + "@swps.edu.pl";
+        return "student-" + UUID.randomUUID() + "@st.swps.edu.pl";
     }
 }

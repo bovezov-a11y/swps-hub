@@ -7,6 +7,8 @@ import { Spinner } from '../../components/Spinner'
 import { academicYearOptions, materialTypeOrder, materialTypes } from '../../lib/academic'
 import type { CourseDetail, Material } from '../../lib/types'
 import { useDeleteMaterial, useMaterials, useVote, type MaterialFilters } from './api'
+import { supportsAi, useAiStatus } from '../ai/api'
+import { StudyAidDialog } from '../ai/StudyAidDialog'
 import { MaterialCard } from './MaterialCard'
 import { UploadForm } from './UploadForm'
 
@@ -16,6 +18,8 @@ export function MaterialsSection({ course }: { course: CourseDetail }) {
   const [years] = useState(() => academicYearOptions())
   const materials = useMaterials(course.id, filters)
   const vote = useVote(course.id)
+  const aiStatus = useAiStatus()
+  const [studying, setStudying] = useState<Material | null>(null)
   const deleteMaterial = useDeleteMaterial()
 
   const remove = (material: Material) => {
@@ -116,11 +120,13 @@ export function MaterialsSection({ course }: { course: CourseDetail }) {
                 material={material}
                 onVote={(voted) => vote.mutate({ material, voted })}
                 onDelete={() => remove(material)}
+                onStudy={aiStatus.data?.enabled && supportsAi(material) ? () => setStudying(material) : undefined}
               />
             ))}
           </ul>
         )}
       </div>
+      {studying && <StudyAidDialog material={studying} onClose={() => setStudying(null)} />}
     </section>
   )
 }
