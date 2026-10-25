@@ -4,7 +4,7 @@
 
 An unofficial platform for SWPS University students: course schedules, an exam calendar, and notes and past exams shared by students of every program and year.
 
-> Status: Phases 1 and 2 complete. Not affiliated with or endorsed by SWPS University.
+> Status: Phases 1–4 complete. Not affiliated with or endorsed by SWPS University.
 
 ## Features
 
@@ -27,12 +27,16 @@ An unofficial platform for SWPS University students: course schedules, an exam c
 - Privacy by default: shared files are anonymous, other students only ever see totals, and a versioned privacy policy is accepted at sign-up
 - AI summaries and practice quizzes for shared PDFs, images and text files, generated with Claude, stored once and shared by every student, with a daily limit per student
 
-### Next
-- Comments on materials, reporting and moderation
-- S3-compatible object storage for uploads
+### Phase 4 – Learning, community and university tools ✅
+- **Flashcards with spaced repetition (SM-2):** shared decks per course, private progress, daily streak, keyboard-driven flip-card study; Claude can turn any shared PDF into a deck
+- **Anonymous Q&A per course:** ask, answer, upvote, and the asker accepts the best answer; names are never shown
+- **Study groups:** capacity-limited groups per course; only members see who is in a group and where it meets
+- **Workload & wellbeing:** a 16-week heatmap of your exams and deadlines, crunch-week alerts, one-click study plans that land in your calendar and `.ics` feed, a focus timer and Polish support lines
+- **Moderation:** anonymous reports, auto-hide after 3 reports, a moderator queue (hide, restore, delete) with an audit log; admins appoint moderators
+- **University insights for staff:** assessment heatmap per program, crunch weeks, courses with no materials, unanswered questions. Aggregate only: any figure based on fewer than 5 students is withheld (k-anonymity)
 
-### Phase 3 – Production polish
-- `@swps.edu.pl` email verification
+### Next
+- S3-compatible object storage for uploads
 - Email reminders before exams and deadlines
 - Polish / English UI, PWA support
 - Public deployment, monitoring and error tracking
@@ -68,6 +72,11 @@ The backend is organised by feature (`auth`, `course`, `event`, `calendar`) rath
 - **Enrollment** – a user joined a course
 - **CourseEvent** – lecture / class / lab / exam / deadline with start, end and location
 - **Material** – a shared file (past exam, notes, summary…) with its academic year and vote count
+- **Question / Answer** – anonymous course Q&A with votes and an accepted answer
+- **StudyGroup** – a capacity-limited group in a course, with its members
+- **FlashcardDeck / Flashcard / CardProgress** – shared decks; each student's SM-2 schedule per card
+- **StudySession** – personal study time planned before an exam
+- **Report / ModerationAction** – anonymous reports and the moderation audit log
 
 ### API
 
@@ -89,6 +98,23 @@ The backend is organised by feature (`auth`, `course`, `event`, `calendar`) rath
 | `GET` | `/api/calendar?from=&to=` | Events from all joined courses |
 | `GET` `POST` | `/api/calendar/feed`, `/api/calendar/feed/reset` | Private `.ics` feed link; reset it |
 | `GET` | `/api/calendar/feeds/{token}.ics` | The iCalendar feed itself (no login, secret token) |
+| `GET` `POST` | `/api/courses/{id}/questions` | List (`filter`, `sort`) or ask questions |
+| `GET` `DELETE` | `/api/questions/{id}` | A question with its answers; delete it |
+| `POST` | `/api/questions/{id}/answers` | Answer a question |
+| `PUT` `DELETE` | `/api/questions/{id}/accepted-answer` | Accept an answer (asker only) |
+| `PUT` `DELETE` | `/api/questions/{id}/vote`, `/api/answers/{id}/vote` | Upvote or remove the upvote |
+| `GET` `POST` | `/api/courses/{id}/groups` | List or start study groups |
+| `PUT` `DELETE` | `/api/groups/{id}/membership` | Join or leave a group |
+| `GET` `POST` | `/api/courses/{id}/decks` | List flashcard decks with due counts, or create one |
+| `GET` | `/api/decks/{id}/study` | Cards due now, then new ones |
+| `POST` | `/api/cards/{id}/reviews` | Grade a card (`AGAIN`, `HARD`, `GOOD`, `EASY`) |
+| `POST` | `/api/materials/{id}/ai/flashcards` | Turn a material into a flashcard deck with Claude |
+| `GET` | `/api/me/learning`, `/api/me/workload` | Flashcard streak; personal workload and crunch weeks |
+| `POST` | `/api/me/study-plans` | Plan study sessions before an exam |
+| `POST` | `/api/reports` | Report content anonymously |
+| `GET` `POST` | `/api/moderation/queue`, `/api/moderation/{type}/{id}/hide` … | Moderator queue and actions (moderators) |
+| `GET` `POST` | `/api/admin/moderators` | Appoint or remove moderators (admins) |
+| `GET` | `/api/insights` | Aggregate university insights (admins) |
 
 Full interactive documentation: Swagger UI at `/swagger-ui.html` when running the backend locally.
 
@@ -97,7 +123,7 @@ Full interactive documentation: Swagger UI at `/swagger-ui.html` when running th
 ```
 backend/            Spring Boot API
 frontend/           React + TypeScript client
-docker-compose.yml  Local stack (PostgreSQL, API, client)
+compose.yaml        Local stack (PostgreSQL, Mailpit, API, client)
 .github/workflows/  CI pipeline
 ```
 
@@ -131,7 +157,8 @@ API documentation (Swagger UI): http://localhost:8080/swagger-ui.html
 |----------|---------|---------|
 | `JWT_SECRET` | random per start | Base64 key (at least 256 bits) that signs login tokens. **Required in production**; create one with `openssl rand -base64 32`. |
 | `STORAGE_DIR` | `./data/uploads` | Where uploaded materials are stored. |
-| `ANTHROPIC_API_KEY` | unset | Turns on AI summaries and quizzes. Without it the AI buttons are hidden. |
+| `ANTHROPIC_API_KEY` | unset | Turns on AI summaries, quizzes and flashcards. Without it the AI buttons are hidden. |
+| `ADMIN_EMAILS` | unset | Comma-separated emails that get the admin role when they sign in. Admins appoint moderators in the app. |
 | `SHOW_UPLOADER_NAMES` | `false` | Show other students who shared each file. Off keeps sharing anonymous. |
 | `PUBLIC_URL` | `http://localhost:5173` | Base URL of the web app, used in email links. |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | local Mailpit | SMTP server for confirmation emails. |

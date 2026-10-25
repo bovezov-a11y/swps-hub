@@ -64,7 +64,7 @@ class MaterialService {
                 ? Sort.by(Sort.Order.desc("createdAt"))
                 : Sort.by(Sort.Order.desc("voteCount"), Sort.Order.desc("createdAt"));
         List<Material> found = materials.findForCourse(courseId, type,
-                academicYear == null || academicYear.isBlank() ? null : academicYear,
+                academicYear == null || academicYear.isBlank() ? null : academicYear, user.id(), user.isModerator(),
                 PageRequest.of(0, MAX_MATERIALS_PER_COURSE, sort));
         return toResponses(user, found);
     }
@@ -101,8 +101,11 @@ class MaterialService {
     }
 
     @Transactional(readOnly = true)
-    MaterialFile open(UUID materialId) {
+    MaterialFile open(CurrentUser user, UUID materialId) {
         Material material = require(materialId);
+        if (material.isHidden() && !material.getUploadedBy().equals(user.id()) && !user.isModerator()) {
+            throw new NotFoundException("Material not found");
+        }
         Resource resource = storage.load(material.getFileKey());
         if (!resource.exists()) {
             throw new NotFoundException("The file for this material is missing");
@@ -128,6 +131,11 @@ class MaterialService {
         if (!canDelete(user, material)) {
             throw new ForbiddenException("Only the uploader or a moderator can delete this material");
         }
+        remove(material);
+    }
+
+    /** Deletes the row now and the stored file once the deletion is committed. */
+    void remove(Material material) {
         materials.delete(material);
         afterTransaction(committed -> {
             if (committed) storage.delete(material.getFileKey());
@@ -158,7 +166,7 @@ class MaterialService {
                     material.getFileName(), material.getContentType(), material.getFileSize(), material.getVoteCount(),
                     voted.contains(material.getId()),
                     uploader == null ? null : new Uploader(uploader.getDisplayName()),
-                    mine, material.getCreatedAt(), canDelete(user, material));
+                    mine, material.isHidden(), material.getCreatedAt(), canDelete(user, material));
         }).toList();
     }
 

@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, ChevronDown, LogOut } from 'lucide-react'
+import { BarChart3, BookOpen, CalendarDays, ChevronDown, LogOut, ShieldCheck } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../features/auth/auth-context'
@@ -62,6 +62,22 @@ export function UserMenu() {
             <CalendarDays className="size-4 text-slate-400" aria-hidden="true" />
             Calendar
           </Link>
+          {(user?.role === 'MODERATOR' || user?.role === 'ADMIN') && (
+            <>
+              <div className="my-1 border-t border-slate-100" />
+              <p className="px-3 pt-1 pb-0.5 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">Staff</p>
+              <Link role="menuitem" to="/moderation" onClick={() => setOpen(false)} className={itemClass}>
+                <ShieldCheck className="size-4 text-slate-400" aria-hidden="true" />
+                Moderation
+              </Link>
+              {user.role === 'ADMIN' && (
+                <Link role="menuitem" to="/insights" onClick={() => setOpen(false)} className={itemClass}>
+                  <BarChart3 className="size-4 text-slate-400" aria-hidden="true" />
+                  University insights
+                </Link>
+              )}
+            </>
+          )}
           <div className="my-1 border-t border-slate-100" />
           <button role="menuitem" type="button" onClick={logout} className={itemClass}>
             <LogOut className="size-4 text-slate-400" aria-hidden="true" />

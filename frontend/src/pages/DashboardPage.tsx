@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, CalendarClock, CalendarDays, Compass, FileText, type LucideIcon } from 'lucide-react'
+import { ArrowRight, BookOpen, CalendarClock, CalendarDays, Compass, FileText, Flame, HeartPulse, Layers, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { LinkButton } from '../components/Button'
@@ -10,7 +10,9 @@ import { ListSkeleton, Skeleton } from '../components/Skeleton'
 import { useAuth } from '../features/auth/auth-context'
 import { useCalendar } from '../features/calendar/api'
 import { useCourses } from '../features/courses/api'
+import { useLearningSummary } from '../features/flashcards/api'
 import { useMaterialFeed } from '../features/materials/api'
+import { useWorkload } from '../features/wellbeing/api'
 import { materialTypes } from '../lib/academic'
 import { addDays, formatLongDay, formatTimeRange, relativeDay } from '../lib/dates'
 import { eventTypes, isAssessment } from '../lib/event-types'
@@ -71,6 +73,8 @@ export function DashboardPage() {
           </dl>
         </div>
       </section>
+
+      <FocusStrip />
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -161,6 +165,61 @@ export function DashboardPage() {
         </div>
       </div>
     </>
+  )
+}
+
+/** A heads-up about the next crunch week and today's flashcards. Hidden when there is nothing to say. */
+function FocusStrip() {
+  const workload = useWorkload(4)
+  const learning = useLearningSummary()
+  const crunch = workload.data?.crunches[0]
+  const summary = learning.data
+  const hasCards = summary && (summary.dueCards > 0 || summary.streakDays > 0)
+  if (!crunch && !hasCards) return null
+
+  return (
+    <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+      {crunch && (
+        <Link
+          to="/wellbeing"
+          className="card flex items-center gap-4 border-amber-200 bg-amber-50/60 p-4 transition hover:shadow-card-hover"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <HeartPulse className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-slate-900">
+              Busy week ahead: {crunch.assessments.length} exams &amp; deadlines
+            </p>
+            <p className="truncate text-sm text-slate-600">
+              {formatLongDay(new Date(crunch.from))} · {crunch.assessments.map((item) => item.courseCode).join(', ')}
+            </p>
+          </div>
+          <span className="shrink-0 text-sm font-semibold text-amber-800">Plan it</span>
+        </Link>
+      )}
+      {hasCards && (
+        <div className="card flex items-center gap-4 p-4">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+            <Layers className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-slate-900">
+              {summary.dueCards > 0 ? `${summary.dueCards} flashcards to review` : 'All flashcards reviewed'}
+            </p>
+            <p className="text-sm text-slate-600">
+              {summary.reviewedToday} reviewed today. Open a course’s Flashcards tab to study.
+            </p>
+          </div>
+          {summary.streakDays > 0 && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-sm font-semibold text-orange-700">
+              <Flame className="size-4" aria-hidden="true" />
+              {summary.streakDays} {summary.streakDays === 1 ? 'day' : 'days'}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

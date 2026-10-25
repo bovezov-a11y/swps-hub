@@ -95,6 +95,10 @@ public class User {
         return emailVerified;
     }
 
+    public void changeRole(Role role) {
+        this.role = role;
+    }
+
     public void markEmailVerified() {
         this.emailVerified = true;
     }

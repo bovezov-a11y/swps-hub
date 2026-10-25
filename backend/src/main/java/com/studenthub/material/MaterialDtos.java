@@ -29,6 +29,7 @@ final class MaterialDtos {
 
     record MaterialResponse(UUID id, CourseRef course, MaterialType type, String title, String description,
                             String academicYear, String fileName, String contentType, long fileSize, int voteCount,
-                            boolean voted, Uploader uploader, boolean mine, Instant createdAt, boolean canDelete) {
+                            boolean voted, Uploader uploader, boolean mine, boolean hidden, Instant createdAt,
+                            boolean canDelete) {
     }
 }

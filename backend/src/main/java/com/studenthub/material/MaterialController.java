@@ -61,8 +61,8 @@ class MaterialController {
     }
 
     @GetMapping("/api/materials/{materialId}/file")
-    ResponseEntity<Resource> download(@PathVariable UUID materialId) {
-        MaterialFile file = materialService.open(materialId);
+    ResponseEntity<Resource> download(CurrentUser user, @PathVariable UUID materialId) {
+        MaterialFile file = materialService.open(user, materialId);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.size())

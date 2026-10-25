@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { privacyPolicy } from '../../content/privacy-policy'
 import { anna, emptyPage, mockApi } from '../../test/mock-api'
 import { renderApp } from '../../test/render'
 
@@ -61,7 +62,7 @@ describe('authentication', () => {
       displayName: 'Anna Nowak',
       email: 'anna@st.swps.edu.pl',
       password: 'correct-horse',
-      privacyPolicyVersion: '1.0',
+      privacyPolicyVersion: privacyPolicy.version,
     })
     expect(screen.getByText('anna@st.swps.edu.pl')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send a new link' })).toBeInTheDocument()

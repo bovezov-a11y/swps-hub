@@ -1,5 +1,7 @@
 package com.studenthub;
 
+import com.studenthub.ai.StudyAids.Card;
+import com.studenthub.ai.StudyAids.FlashcardSet;
 import com.studenthub.ai.StudyAids.KeyTerm;
 import com.studenthub.ai.StudyAids.Question;
 import com.studenthub.ai.StudyAids.Quiz;
@@ -66,6 +68,13 @@ public class TestDoubles {
             calls.incrementAndGet();
             return new Summary("Overview of " + material.title(), List.of("Point one", "Point two"),
                     List.of(new KeyTerm("Term", "Definition")));
+        }
+
+        @Override
+        public FlashcardSet flashcards(StudyMaterial material) {
+            calls.incrementAndGet();
+            return new FlashcardSet(List.of(new Card("What is a heap?", "A tree-based priority queue."),
+                    new Card("Quicksort average time?", "O(n log n).")));
         }
 
         @Override

@@ -15,6 +15,8 @@ public interface StudyAssistant {
 
     Quiz quiz(StudyMaterial material);
 
+    StudyAids.FlashcardSet flashcards(StudyMaterial material);
+
     /**
      * The file and the context the model needs.
      *

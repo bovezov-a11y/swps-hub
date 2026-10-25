@@ -62,8 +62,8 @@ describe('AI study tools', () => {
 
     const exam = (await screen.findByRole('heading', { name: 'Final exam 2025' })).closest('li')!
     const slideDeck = screen.getByRole('heading', { name: 'Lecture slides' }).closest('li')!
-    expect(await within(exam).findByRole('button', { name: 'Summary & quiz' })).toBeInTheDocument()
-    expect(within(slideDeck).queryByRole('button', { name: 'Summary & quiz' })).not.toBeInTheDocument()
+    expect(await within(exam).findByRole('button', { name: 'Summary, quiz & cards' })).toBeInTheDocument()
+    expect(within(slideDeck).queryByRole('button', { name: 'Summary, quiz & cards' })).not.toBeInTheDocument()
   })
 
   it('are hidden when the server has no AI key', async () => {
@@ -71,14 +71,14 @@ describe('AI study tools', () => {
     renderApp(`/courses/${statistics.id}`)
 
     await screen.findByRole('heading', { name: 'Final exam 2025' })
-    expect(screen.queryByRole('button', { name: 'Summary & quiz' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Summary, quiz & cards' })).not.toBeInTheDocument()
   })
 
   it('show a summary and an interactive quiz', async () => {
     mockCourse(true)
     renderApp(`/courses/${statistics.id}`)
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Summary & quiz' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Summary, quiz & cards' }))
     const dialog = await screen.findByRole('dialog')
 
     expect(await within(dialog).findByText('The exam covers hypothesis testing.')).toBeInTheDocument()

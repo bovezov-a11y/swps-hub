@@ -53,6 +53,9 @@ class EventService {
         if (!courseService.isEnrolled(user.id(), courseId) && !user.isModerator()) {
             throw new ForbiddenException("Join the course to add events to it");
         }
+        if (request.type() == EventType.STUDY) {
+            throw new InvalidRequestException("type", "study sessions are personal; plan them from the wellbeing page");
+        }
         if (request.endsAt().isBefore(request.startsAt())) {
             throw new InvalidRequestException("endsAt", "must not be before the start time");
         }

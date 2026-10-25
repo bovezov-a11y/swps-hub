@@ -47,7 +47,8 @@ export type CourseDetail = CourseSummary & {
   createdAt: string
 }
 
-export type EventType = 'LECTURE' | 'CLASS' | 'LAB' | 'EXAM' | 'DEADLINE' | 'OTHER'
+/** STUDY marks a student's own study session; course events never use it. */
+export type EventType = 'LECTURE' | 'CLASS' | 'LAB' | 'EXAM' | 'DEADLINE' | 'OTHER' | 'STUDY'
 
 export type CourseEvent = {
   id: string
@@ -87,6 +88,12 @@ export type Material = {
   /** Null when the uploader stays anonymous to the viewer, which is the default for other people's files. */
   uploader: { displayName: string } | null
   mine: boolean
+  /** Hidden by moderators; only the uploader and moderators see it. */
+  hidden: boolean
   createdAt: string
   canDelete: boolean
 }
+
+export type ContentType = 'MATERIAL' | 'QUESTION' | 'ANSWER'
+
+export type ReportReason = 'COPYRIGHT' | 'INAPPROPRIATE' | 'WRONG_COURSE' | 'SPAM' | 'OTHER'

@@ -1,18 +1,21 @@
-import { BookOpenText, Check, CircleHelp, RotateCcw, Sparkles, X } from 'lucide-react'
+import { BookOpenText, Check, CircleHelp, Layers, RotateCcw, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
 import { ErrorState } from '../../components/EmptyState'
 import { Spinner } from '../../components/Spinner'
 import type { Material } from '../../lib/types'
+import { useGenerateFlashcards } from '../flashcards/api'
 import { useAiStatus, useStudyAid, type Quiz, type StudyAidKind, type Summary } from './api'
 
 export function StudyAidDialog({ material, onClose }: { material: Material; onClose: () => void }) {
-  const [kind, setKind] = useState<StudyAidKind>('summary')
+  const [kind, setKind] = useState<StudyAidKind | 'flashcards'>('summary')
   const status = useAiStatus()
   const tabs = [
     { id: 'summary', label: 'Summary', icon: BookOpenText },
     { id: 'quiz', label: 'Practice quiz', icon: CircleHelp },
+    { id: 'flashcards', label: 'Flashcards', icon: Layers },
   ] as const
 
   return (
@@ -36,7 +39,13 @@ export function StudyAidDialog({ material, onClose }: { material: Material; onCl
       </div>
 
       <div className="mt-5">
-        {kind === 'summary' ? <SummaryTab materialId={material.id} /> : <QuizTab materialId={material.id} />}
+        {kind === 'summary' ? (
+          <SummaryTab materialId={material.id} />
+        ) : kind === 'quiz' ? (
+          <QuizTab materialId={material.id} />
+        ) : (
+          <FlashcardsTab materialId={material.id} />
+        )}
       </div>
 
       <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
@@ -66,6 +75,32 @@ function QuizTab({ materialId }: { materialId: string }) {
   if (quiz.isPending) return <Generating what="quiz" />
   if (quiz.isError) return <ErrorState text={quiz.error.message} />
   return <QuizView quiz={quiz.data as Quiz} />
+}
+
+function FlashcardsTab({ materialId }: { materialId: string }) {
+  const generate = useGenerateFlashcards()
+  const navigate = useNavigate()
+
+  if (generate.isPending) return <Generating what="flashcards" />
+  return (
+    <div className="flex flex-col items-center gap-3 py-8 text-center">
+      <span className="flex size-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+        <Layers className="size-6" aria-hidden="true" />
+      </span>
+      <p className="max-w-sm font-medium text-slate-900">Turn this file into a flashcard deck for the whole course</p>
+      <p className="max-w-sm text-sm text-slate-500">
+        Cards are scheduled with spaced repetition, so each one comes back right before you would forget it.
+      </p>
+      {generate.isError && <p className="text-sm text-red-600">{generate.error.message}</p>}
+      <Button
+        className="mt-2"
+        onClick={() => generate.mutate(materialId, { onSuccess: ({ deckId }) => navigate(`/decks/${deckId}/study`) })}
+      >
+        <Sparkles className="size-4" aria-hidden="true" />
+        Make flashcards and study
+      </Button>
+    </div>
+  )
 }
 
 function Generating({ what }: { what: string }) {

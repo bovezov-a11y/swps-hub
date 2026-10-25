@@ -1,6 +1,5 @@
 package com.studenthub.calendar;
 
-import com.studenthub.event.CourseEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -21,7 +20,7 @@ final class IcsWriter {
     private IcsWriter() {
     }
 
-    static String write(String calendarName, List<CourseEvent> events, Instant generatedAt) {
+    static String write(String calendarName, List<CalendarDtos.CalendarEvent> events, Instant generatedAt) {
         List<String> lines = new ArrayList<>();
         lines.add("BEGIN:VCALENDAR");
         lines.add("VERSION:2.0");
@@ -31,17 +30,17 @@ final class IcsWriter {
         lines.add("X-WR-CALNAME:" + escape(calendarName));
         lines.add("REFRESH-INTERVAL;VALUE=DURATION:PT6H");
         lines.add("X-PUBLISHED-TTL:PT6H");
-        for (CourseEvent event : events) {
+        for (CalendarDtos.CalendarEvent event : events) {
             lines.add("BEGIN:VEVENT");
-            lines.add("UID:" + event.getId() + "@student-hub");
+            lines.add("UID:" + event.id() + "@student-hub");
             lines.add("DTSTAMP:" + UTC_TIMESTAMP.format(generatedAt));
-            lines.add("DTSTART:" + UTC_TIMESTAMP.format(event.getStartsAt()));
-            lines.add("DTEND:" + UTC_TIMESTAMP.format(event.getEndsAt()));
-            lines.add("SUMMARY:" + escape("%s: %s".formatted(event.getCourse().getCode(), event.getTitle())));
-            lines.add("DESCRIPTION:" + escape("%s · %s".formatted(event.getType().label(), event.getCourse().getName())));
-            lines.add("CATEGORIES:" + event.getType().name());
-            if (event.getLocation() != null) {
-                lines.add("LOCATION:" + escape(event.getLocation()));
+            lines.add("DTSTART:" + UTC_TIMESTAMP.format(event.startsAt()));
+            lines.add("DTEND:" + UTC_TIMESTAMP.format(event.endsAt()));
+            lines.add("SUMMARY:" + escape("%s: %s".formatted(event.course().code(), event.title())));
+            lines.add("DESCRIPTION:" + escape("%s · %s".formatted(event.type().label(), event.course().name())));
+            lines.add("CATEGORIES:" + event.type().name());
+            if (event.location() != null) {
+                lines.add("LOCATION:" + escape(event.location()));
             }
             lines.add("END:VEVENT");
         }

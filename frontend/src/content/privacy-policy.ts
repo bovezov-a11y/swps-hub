@@ -6,8 +6,8 @@
  * version, and each account records which version it accepted.
  */
 export const privacyPolicy = {
-  version: '1.0',
-  lastUpdated: '23 October 2026',
+  version: '1.1',
+  lastUpdated: '25 October 2026',
   repositoryUrl: 'https://github.com/bovezov-a11y/swps-hub',
   sections: [
     {
@@ -22,8 +22,10 @@ export const privacyPolicy = {
       paragraphs: ['SWPS Hub is built so that other students cannot follow your activity:'],
       list: [
         'Files you share are anonymous. Other students see "Shared by a student", never your name.',
+        'Questions and answers are anonymous too. Others see "a student" or "the asker", never your name.',
+        'In a study group, only the other members see your name and where the group meets. Everyone else only sees how many places are taken.',
         'Other students see only totals, such as how many people joined a course or upvoted a file, never who did.',
-        'Your courses, your calendar, your upvotes and your AI usage are visible only to you.',
+        'Your courses, your calendar, your upvotes, your study plans, your flashcard progress and your AI usage are visible only to you.',
         'Courses and events you add are visible to everyone, without your name.',
         'There are no public profiles, no follower lists and no "last seen" or activity status.',
       ],
@@ -34,7 +36,10 @@ export const privacyPolicy = {
         'Account: your name, your university email address, and your password, which is stored only as a one-way hash that nobody can read back.',
         'What you add: courses and events you create, files you upload with their title and description, your upvotes, and the courses you join.',
         'Calendar: a secret link token if you use calendar sync. You can reset it at any time.',
-        'AI usage: how many AI summaries or quizzes you started each day, to apply the daily limit.',
+        'Community: questions and answers you post, your upvotes on them, and the study groups you join.',
+        'Learning: flashcard decks you create, and for each card when you last reviewed it and when it is due again. Study sessions you plan before an exam.',
+        'Reports: when you report content, which item it was, the reason and any note you add.',
+        'AI usage: how many AI summaries, quizzes or flashcard decks you started each day, to apply the daily limit.',
         'Technical: your login is kept in your browser\'s local storage on your device. Our server may keep short-lived technical logs, such as IP addresses and request times, to keep the service secure and working.',
       ],
     },
@@ -44,6 +49,16 @@ export const privacyPolicy = {
         'We do not show ads and we do not sell or rent your data.',
         'We do not use analytics, tracking pixels or advertising cookies.',
         'We do not send marketing emails. The only emails we send confirm your address.',
+        'We do not ask how you feel or store any mood or health data. The wellbeing page only uses your exam dates, and the focus timer runs entirely in your browser.',
+      ],
+    },
+    {
+      heading: 'Moderation and university insights',
+      paragraphs: ['A few people can be given staff roles. What they can see is limited on purpose:'],
+      list: [
+        'Moderators review reported content. They see the content and why it was reported, but never who reported it or who posted it.',
+        'Content reported by several students is hidden automatically until a moderator looks at it. Every moderation action is logged.',
+        'Administrators see university insights: totals per programme, such as how many exams fall in each week or which courses lack materials. Insights never name or single out a student, and any figure based on fewer than 5 people is withheld.',
       ],
     },
     {
@@ -52,7 +67,7 @@ export const privacyPolicy = {
       list: [
         'Hosting: the server and database that store your account and files.',
         'Email delivery: the service that sends your confirmation email.',
-        'AI study tools (only when enabled and only when you use them): the file you ask about is sent to Anthropic, which provides the Claude model that writes the summary or quiz. The result is stored and shown to everyone who opens that file.',
+        'AI study tools (only when enabled and only when you use them): the file you ask about is sent to Anthropic, which provides the Claude model that writes the summary, quiz or flashcards. The result is stored and shown to everyone who opens that file.',
       ],
     },
     {

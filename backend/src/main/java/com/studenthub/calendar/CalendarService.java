@@ -6,7 +6,12 @@ import com.studenthub.calendar.CalendarDtos.CourseRef;
 import com.studenthub.calendar.CalendarDtos.FeedResponse;
 import com.studenthub.common.InvalidRequestException;
 import com.studenthub.common.NotFoundException;
+import com.studenthub.course.Course;
+import com.studenthub.event.CourseEvent;
 import com.studenthub.event.CourseEventRepository;
+import com.studenthub.event.EventType;
+import com.studenthub.wellbeing.StudySession;
+import com.studenthub.wellbeing.StudySessionRepository;
 import com.studenthub.user.User;
 import com.studenthub.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -15,8 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 class CalendarService {
@@ -28,10 +36,12 @@ class CalendarService {
 
     private final CourseEventRepository events;
     private final UserRepository users;
+    private final StudySessionRepository studySessions;
 
-    CalendarService(CourseEventRepository events, UserRepository users) {
+    CalendarService(CourseEventRepository events, UserRepository users, StudySessionRepository studySessions) {
         this.events = events;
         this.users = users;
+        this.studySessions = studySessions;
     }
 
     @Transactional(readOnly = true)
@@ -42,11 +52,26 @@ class CalendarService {
         if (Duration.between(from, to).compareTo(MAX_RANGE) > 0) {
             throw new InvalidRequestException("to", "range can be at most 366 days");
         }
-        return events.findForUser(user.id(), from, to).stream()
-                .map(event -> new CalendarEvent(event.getId(), event.getType(), event.getTitle(), event.getStartsAt(),
-                        event.getEndsAt(), event.getLocation(), new CourseRef(event.getCourse().getId(),
-                        event.getCourse().getCode(), event.getCourse().getName())))
-                .toList();
+        return combined(user.id(), from, to);
+    }
+
+    /** Course events and the student's own study sessions, in time order. */
+    private List<CalendarEvent> combined(UUID userId, Instant from, Instant to) {
+        List<CalendarEvent> result = new ArrayList<>();
+        for (CourseEvent event : events.findForUser(userId, from, to)) {
+            result.add(new CalendarEvent(event.getId(), event.getType(), event.getTitle(), event.getStartsAt(),
+                    event.getEndsAt(), event.getLocation(), courseRef(event.getCourse())));
+        }
+        for (StudySession session : studySessions.findForUser(userId, from, to)) {
+            result.add(new CalendarEvent(session.getId(), EventType.STUDY, session.getTitle(), session.getStartsAt(),
+                    session.getEndsAt(), null, courseRef(session.getCourse())));
+        }
+        result.sort(Comparator.comparing(CalendarEvent::startsAt));
+        return result;
+    }
+
+    private static CourseRef courseRef(Course course) {
+        return new CourseRef(course.getId(), course.getCode(), course.getName());
     }
 
     @Transactional
@@ -71,8 +96,8 @@ class CalendarService {
         User account = users.findByCalendarToken(token)
                 .orElseThrow(() -> new NotFoundException("Calendar feed not found"));
         Instant now = Instant.now();
-        return IcsWriter.write("Student Hub",
-                events.findForUser(account.getId(), now.minus(FEED_LOOK_BACK), now.plus(FEED_LOOK_AHEAD)), now);
+        return IcsWriter.write("SWPS Hub",
+                combined(account.getId(), now.minus(FEED_LOOK_BACK), now.plus(FEED_LOOK_AHEAD)), now);
     }
 
     private User requireUser(CurrentUser user) {

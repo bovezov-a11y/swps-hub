@@ -8,6 +8,7 @@ import com.studenthub.common.CodedException;
 import com.studenthub.common.ConflictException;
 import com.studenthub.common.InvalidRequestException;
 import com.studenthub.user.Role;
+import com.studenthub.user.RoleAssignment;
 import com.studenthub.user.User;
 import com.studenthub.user.UserRepository;
 import com.studenthub.user.UserResponse;
@@ -32,10 +33,11 @@ class AuthService {
     private final EmailVerificationService verification;
     private final RegistrationProperties registration;
     private final String privacyPolicyVersion;
+    private final RoleAssignment roles;
 
     AuthService(UserRepository users, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
                 TokenService tokenService, EmailVerificationService verification, RegistrationProperties registration,
-                @Value("${app.privacy.policy-version}") String privacyPolicyVersion) {
+                @Value("${app.privacy.policy-version}") String privacyPolicyVersion, RoleAssignment roles) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -43,6 +45,7 @@ class AuthService {
         this.verification = verification;
         this.registration = registration;
         this.privacyPolicyVersion = privacyPolicyVersion;
+        this.roles = roles;
     }
 
     @Transactional
@@ -92,7 +95,7 @@ class AuthService {
                 .ifPresent(verification::sendLink);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
         // The password is checked first, so the verification state is only revealed to the account owner.
@@ -111,6 +114,7 @@ class AuthService {
     }
 
     private AuthResponse toResponse(User user) {
+        roles.apply(user);
         TokenService.IssuedToken token = tokenService.issue(user);
         return new AuthResponse(token.value(), token.expiresAt(), UserResponse.from(user));
     }

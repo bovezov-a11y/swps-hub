@@ -131,7 +131,7 @@ class AuthControllerTest extends ApiTest {
     }
 
     private MvcTestResult registerRequest(String email, String password, String displayName) {
-        return registerRequest(email, password, displayName, "1.0");
+        return registerRequest(email, password, displayName, "1.1");
     }
 
     private MvcTestResult registerRequest(String email, String password, String displayName, String policyVersion) {

@@ -30,6 +30,18 @@ public final class StudyAids {
             List<Question> questions) {
     }
 
+    public record FlashcardSet(
+            @JsonPropertyDescription("Between 10 and 25 flashcards covering the most important facts and concepts")
+            List<Card> cards) {
+    }
+
+    public record Card(
+            @JsonPropertyDescription("A short question or term, answerable from memory")
+            String front,
+            @JsonPropertyDescription("The answer in one to three sentences")
+            String back) {
+    }
+
     public record Question(
             String question,
             @JsonPropertyDescription("Exactly four answer options; the wrong ones should be plausible")

@@ -54,6 +54,10 @@ public class Material {
     @Column(name = "vote_count", nullable = false)
     private int voteCount;
 
+    /** Hidden by moderators, or automatically after several reports. Only the uploader and moderators see it. */
+    @Column(nullable = false)
+    private boolean hidden;
+
     @Column(name = "uploaded_by", nullable = false, updatable = false)
     private UUID uploadedBy;
 
@@ -122,6 +126,14 @@ public class Material {
 
     public int getVoteCount() {
         return voteCount;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     public UUID getUploadedBy() {

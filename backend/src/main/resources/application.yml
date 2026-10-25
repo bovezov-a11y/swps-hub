@@ -50,9 +50,18 @@ app:
   privacy:
     # Version of the privacy policy users accept at sign-up. Change it together with
     # frontend/src/content/privacy-policy.ts whenever the policy text changes.
-    policy-version: "1.0"
+    policy-version: "1.1"
     # Whether students see who shared a material. Off by default, so sharing is anonymous.
     show-uploader-names: ${SHOW_UPLOADER_NAMES:false}
+  roles:
+    # Comma-separated addresses that get the admin role (university staff dashboard, moderator management).
+    admin-emails: ${ADMIN_EMAILS:}
+  moderation:
+    # Content is hidden until reviewed once this many students report it.
+    auto-hide-threshold: 3
+  insights:
+    # Counts of people smaller than this are withheld from the university dashboard.
+    min-group-size: 5
   storage:
     # Uploaded materials. Mount a persistent volume here in production.
     local-dir: ${STORAGE_DIR:./data/uploads}

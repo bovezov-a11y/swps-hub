@@ -8,6 +8,7 @@ import com.studenthub.auth.CurrentUser;
 import com.studenthub.common.CodedException;
 import com.studenthub.common.InvalidRequestException;
 import com.studenthub.common.NotFoundException;
+import com.studenthub.flashcard.FlashcardService;
 import com.studenthub.material.Material;
 import com.studenthub.material.MaterialRepository;
 import com.studenthub.storage.FileStorage;
@@ -40,9 +41,11 @@ class AiService {
     private final FileStorage storage;
     private final AiProperties properties;
     private final JsonMapper json;
+    private final FlashcardService flashcards;
 
     AiService(StudyAssistant assistant, MaterialRepository materials, MaterialAiResultRepository results,
-              AiUsageTracker usage, FileStorage storage, AiProperties properties, JsonMapper json) {
+              AiUsageTracker usage, FileStorage storage, AiProperties properties, JsonMapper json,
+              FlashcardService flashcards) {
         this.assistant = assistant;
         this.materials = materials;
         this.results = results;
@@ -50,6 +53,7 @@ class AiService {
         this.storage = storage;
         this.properties = properties;
         this.json = json;
+        this.flashcards = flashcards;
     }
 
     AiStatus status(CurrentUser user) {
@@ -65,12 +69,48 @@ class AiService {
         return studyAid(user, materialId, QUIZ, Quiz.class, assistant::quiz);
     }
 
-    private <T> T studyAid(CurrentUser user, UUID materialId, String kind, Class<T> type,
-                           Function<StudyMaterial, T> generate) {
+    /** Returns the material's AI flashcard deck, generating it on first use; every student shares the deck. */
+    UUID flashcardDeck(CurrentUser user, UUID materialId) {
+        requireEnabled();
+        Material material = materials.findWithCourseById(materialId)
+                .orElseThrow(() -> new NotFoundException("Material not found"));
+        Optional<UUID> existing = flashcards.deckForMaterial(materialId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        StudyMaterial input = toStudyMaterial(material);
+        usage.consume(user.id(), properties.dailyLimit());
+        StudyAids.FlashcardSet set = generate(() -> assistant.flashcards(input));
+        if (set.cards().isEmpty()) {
+            throw new CodedException(HttpStatus.UNPROCESSABLE_ENTITY, "AI_FAILED",
+                    "The AI could not make flashcards from this material.");
+        }
+        return flashcards.createGeneratedDeck(material.getCourse().getId(), "Flashcards: " + material.getTitle(),
+                materialId, set.cards().stream()
+                        .map(card -> new FlashcardService.CardInput(card.front(), card.back())).toList());
+    }
+
+    private void requireEnabled() {
         if (!assistant.isEnabled()) {
             throw new CodedException(HttpStatus.SERVICE_UNAVAILABLE, "AI_DISABLED",
                     "AI study tools are not set up on this server.");
         }
+    }
+
+    private static <T> T generate(java.util.function.Supplier<T> call) {
+        try {
+            return call.get();
+        } catch (StudyAssistantException e) {
+            throw new CodedException(e.isRetryable() ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.UNPROCESSABLE_ENTITY,
+                    "AI_FAILED", e.isRetryable()
+                    ? "The AI service is not available right now. Please try again in a minute."
+                    : "The AI could not work with this material.");
+        }
+    }
+
+    private <T> T studyAid(CurrentUser user, UUID materialId, String kind, Class<T> type,
+                           Function<StudyMaterial, T> generate) {
+        requireEnabled();
         Material material = materials.findWithCourseById(materialId)
                 .orElseThrow(() -> new NotFoundException("Material not found"));
         Optional<MaterialAiResult> cached = results.findById(new MaterialAiResult.Id(materialId, kind));
@@ -80,15 +120,7 @@ class AiService {
 
         StudyMaterial input = toStudyMaterial(material);
         usage.consume(user.id(), properties.dailyLimit());
-        T result;
-        try {
-            result = generate.apply(input);
-        } catch (StudyAssistantException e) {
-            throw new CodedException(e.isRetryable() ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.UNPROCESSABLE_ENTITY,
-                    "AI_FAILED", e.isRetryable()
-                    ? "The AI service is not available right now. Please try again in a minute."
-                    : "The AI could not work with this material.");
-        }
+        T result = generate(() -> generate.apply(input));
 
         try {
             results.save(new MaterialAiResult(materialId, kind, json.writeValueAsString(result), assistant.model()));

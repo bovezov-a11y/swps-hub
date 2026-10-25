@@ -32,6 +32,15 @@ class AiController {
         return aiService.summary(user, materialId);
     }
 
+    /** Returns the id of the material's AI flashcard deck, generating it on first use. */
+    @PostMapping("/api/materials/{materialId}/ai/flashcards")
+    DeckCreated flashcards(CurrentUser user, @PathVariable UUID materialId) {
+        return new DeckCreated(aiService.flashcardDeck(user, materialId));
+    }
+
+    record DeckCreated(UUID deckId) {
+    }
+
     /** Returns the material's practice quiz, generating it on first use. */
     @PostMapping("/api/materials/{materialId}/ai/quiz")
     Quiz quiz(CurrentUser user, @PathVariable UUID materialId) {

@@ -7,8 +7,10 @@ export const eventTypes: Record<EventType, { label: string; badge: string; accen
   EXAM: { label: 'Exam', badge: 'bg-rose-50 text-rose-700 ring-rose-600/20', accent: 'bg-rose-500' },
   DEADLINE: { label: 'Deadline', badge: 'bg-amber-50 text-amber-800 ring-amber-600/20', accent: 'bg-amber-500' },
   OTHER: { label: 'Other', badge: 'bg-slate-100 text-slate-700 ring-slate-500/20', accent: 'bg-slate-400' },
+  STUDY: { label: 'Study', badge: 'bg-teal-50 text-teal-700 ring-teal-600/20', accent: 'bg-teal-500' },
 }
 
-export const eventTypeOrder: EventType[] = ['LECTURE', 'CLASS', 'LAB', 'EXAM', 'DEADLINE', 'OTHER']
+/** Types a student can give a course event; study sessions are created from the wellbeing page instead. */
+export const eventTypeOrder = ['LECTURE', 'CLASS', 'LAB', 'EXAM', 'DEADLINE', 'OTHER'] as const satisfies readonly EventType[]
 
 export const isAssessment = (type: EventType) => type === 'EXAM' || type === 'DEADLINE'

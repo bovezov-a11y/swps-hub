@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Compass, LayoutDashboard, Search } from 'lucide-react'
+import { BookOpen, CalendarDays, Compass, HeartPulse, LayoutDashboard, Search } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { Disclaimer } from './Disclaimer'
@@ -10,6 +10,7 @@ const navigation = [
   { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/my-courses', label: 'My courses', icon: BookOpen },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { to: '/wellbeing', label: 'Wellbeing', icon: HeartPulse },
 ]
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>

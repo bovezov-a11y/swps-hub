@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ChevronRight, FileText, Pencil, Plus, UserRound, Users, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, FileText, Layers, MessageCircleQuestion, Pencil, Plus, UserRound, Users, UsersRound, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button, LinkButton } from '../../components/Button'
@@ -9,7 +9,10 @@ import { ApiError } from '../../lib/api'
 import { studyYearLabel, terms } from '../../lib/academic'
 import { programIdentity } from '../../lib/program-identity'
 import type { CourseDetail, CourseEvent } from '../../lib/types'
+import { FlashcardsSection } from '../flashcards/FlashcardsSection'
+import { GroupsSection } from '../groups/GroupsSection'
 import { MaterialsSection } from '../materials/MaterialsSection'
+import { QaSection } from '../qa/QaSection'
 import { useCourse, useCourseEvents, useDeleteEvent, useEnrollment } from './api'
 import { EventForm } from './EventForm'
 import { EventList } from './EventList'
@@ -35,10 +38,13 @@ export function CourseDetailPage() {
   return <CourseView course={course.data} />
 }
 
+const tabIds = ['materials', 'qa', 'flashcards', 'groups', 'schedule'] as const
+
 function CourseView({ course }: { course: CourseDetail }) {
   const enrollment = useEnrollment()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = searchParams.get('tab') === 'schedule' ? 'schedule' : 'materials'
+  const requested = searchParams.get('tab')
+  const tab = tabIds.find((id) => id === requested) ?? 'materials'
 
   const leave = () => {
     if (window.confirm(`Leave ${course.name}? Its events will disappear from your calendar.`)) {
@@ -48,6 +54,9 @@ function CourseView({ course }: { course: CourseDetail }) {
 
   const tabs = [
     { id: 'materials', label: 'Materials', icon: FileText, count: course.materialCount },
+    { id: 'qa', label: 'Q&A', icon: MessageCircleQuestion, count: null },
+    { id: 'flashcards', label: 'Flashcards', icon: Layers, count: null },
+    { id: 'groups', label: 'Study groups', icon: UsersRound, count: null },
     { id: 'schedule', label: 'Schedule', icon: CalendarDays, count: null },
   ] as const
 
@@ -119,7 +128,8 @@ function CourseView({ course }: { course: CourseDetail }) {
         </div>
       </section>
 
-      <div className="mt-8 inline-flex rounded-xl bg-slate-200/60 p-1" role="tablist">
+      <div className="mt-8 flex max-w-full overflow-x-auto">
+      <div className="inline-flex shrink-0 rounded-xl bg-slate-200/60 p-1" role="tablist">
         {tabs.map(({ id, label, icon: Icon, count }) => (
           <button
             key={id}
@@ -127,7 +137,7 @@ function CourseView({ course }: { course: CourseDetail }) {
             role="tab"
             aria-selected={tab === id}
             onClick={() => setSearchParams(id === 'materials' ? {} : { tab: id }, { replace: true })}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
               tab === id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -143,9 +153,14 @@ function CourseView({ course }: { course: CourseDetail }) {
           </button>
         ))}
       </div>
+      </div>
 
       <div className="mt-6">
-        {tab === 'materials' ? <MaterialsSection course={course} /> : <CourseSchedule course={course} />}
+        {tab === 'materials' && <MaterialsSection course={course} />}
+        {tab === 'qa' && <QaSection course={course} />}
+        {tab === 'flashcards' && <FlashcardsSection course={course} />}
+        {tab === 'groups' && <GroupsSection course={course} />}
+        {tab === 'schedule' && <CourseSchedule course={course} />}
       </div>
     </>
   )

@@ -46,6 +46,9 @@ class ClaudeStudyAssistant implements StudyAssistant {
     private static final String SUMMARY_TASK = """
             Summarize this material for a student preparing for the exam in this course.""";
 
+    private static final String FLASHCARDS_TASK = """
+            Turn this material into flashcards for spaced-repetition study. Each card tests one fact or concept,             the front is short, and the back answers it without needing the other cards.""";
+
     private static final String QUIZ_TASK = """
             Write a practice quiz that checks whether a student understands this material. Each question has \
             exactly one correct option.""";
@@ -89,6 +92,11 @@ class ClaudeStudyAssistant implements StudyAssistant {
     public Quiz quiz(StudyMaterial material) {
         // Wrong answer keys would teach students the wrong thing, so the quiz gets more thinking than the summary.
         return ask(material, Quiz.class, OutputConfig.Effort.HIGH, QUIZ_TASK);
+    }
+
+    @Override
+    public StudyAids.FlashcardSet flashcards(StudyMaterial material) {
+        return ask(material, StudyAids.FlashcardSet.class, OutputConfig.Effort.MEDIUM, FLASHCARDS_TASK);
     }
 
     private <T> T ask(StudyMaterial material, Class<T> type, OutputConfig.Effort effort, String task) {

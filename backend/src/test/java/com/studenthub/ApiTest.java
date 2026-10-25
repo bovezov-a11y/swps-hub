@@ -20,10 +20,13 @@ import java.util.regex.Pattern;
  * Base class for API tests: a full application context on a real PostgreSQL, plus helpers for authenticated calls.
  * Tests share one database, so they create their own users and unique names instead of relying on a clean state.
  */
-@SpringBootTest(properties = {"app.storage.local-dir=target/test-uploads", "app.ai.daily-limit=3"})
+@SpringBootTest(properties = {"app.storage.local-dir=target/test-uploads", "app.ai.daily-limit=3",
+        "app.roles.admin-emails=" + ApiTest.ADMIN_EMAIL})
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, TestDoubles.class})
 public abstract class ApiTest {
+
+    protected static final String ADMIN_EMAIL = "staff-admin@swps.edu.pl";
 
     private static final Pattern VERIFICATION_TOKEN = Pattern.compile("verify-email\\?token=([A-Za-z0-9_-]+)");
 
@@ -41,16 +44,54 @@ public abstract class ApiTest {
 
     /** Registers a student and confirms their email through the link they were sent, the way a real user would. */
     protected TestUser registerUser() {
-        String email = "student-" + UUID.randomUUID() + "@st.swps.edu.pl";
+        return registerUser("student-" + UUID.randomUUID() + "@st.swps.edu.pl");
+    }
+
+    protected TestUser registerUser(String email) {
         mvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"email": "%s", "password": "correct-horse", "displayName": "Test Student",
-                         "privacyPolicyVersion": "1.0"}
+                         "privacyPolicyVersion": "1.1"}
                         """.formatted(email))
                 .exchange();
         String body = body(verifyEmail(verificationToken(email)));
         return new TestUser(JsonPath.read(body, "$.user.id"), email, JsonPath.read(body, "$.token"));
+    }
+
+    /** Logs in again, for example to pick up a role granted after the previous token was issued. */
+    protected TestUser login(TestUser user) {
+        MvcTestResult result = mvc.post().uri("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"email": "%s", "password": "correct-horse"}
+                        """.formatted(user.email()))
+                .exchange();
+        return new TestUser(user.id(), user.email(), JsonPath.read(body(result), "$.token"));
+    }
+
+    /** The configured admin account; tests share one database, so it is created once and reused. */
+    protected TestUser admin() {
+        MvcTestResult result = mvc.post().uri("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"email": "%s", "password": "correct-horse"}
+                        """.formatted(ADMIN_EMAIL))
+                .exchange();
+        if (result.getResponse().getStatus() == 200) {
+            String body = body(result);
+            return new TestUser(JsonPath.read(body, "$.user.id"), ADMIN_EMAIL, JsonPath.read(body, "$.token"));
+        }
+        return registerUser(ADMIN_EMAIL);
+    }
+
+    /** A fresh moderator, appointed by the admin. */
+    protected TestUser moderator() {
+        TestUser user = registerUser();
+        post(admin(), "/api/admin/moderators", """
+                {"email": "%s"}
+                """.formatted(user.email()));
+        return login(user);
     }
 
     protected String verificationToken(String email) {

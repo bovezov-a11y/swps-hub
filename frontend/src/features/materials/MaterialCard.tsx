@@ -4,6 +4,7 @@ import { formatFileSize, materialTypes } from '../../lib/academic'
 import { relativeDay } from '../../lib/dates'
 import { fileKind } from '../../lib/file-kinds'
 import type { Material } from '../../lib/types'
+import { ReportButton } from '../moderation/ReportButton'
 import { isPreviewable, openMaterial } from './open-material'
 
 type MaterialCardProps = {
@@ -48,6 +49,11 @@ export function MaterialCard({ material, onVote, onDelete, onStudy }: MaterialCa
           <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
             {material.academicYear}
           </span>
+          {material.hidden && (
+            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200 ring-inset">
+              Hidden by moderators
+            </span>
+          )}
         </div>
         <h3 className="mt-1.5 font-semibold text-slate-900">{material.title}</h3>
         {material.description && (
@@ -78,9 +84,10 @@ export function MaterialCard({ material, onVote, onDelete, onStudy }: MaterialCa
               className="inline-flex items-center gap-1 rounded-full bg-linear-to-r from-indigo-600 to-violet-600 px-2.5 py-1 font-semibold text-white shadow-sm transition hover:shadow-glow"
             >
               <Sparkles className="size-3.5" aria-hidden="true" />
-              Summary &amp; quiz
+              Summary, quiz &amp; cards
             </button>
           )}
+          {!material.mine && <ReportButton type="MATERIAL" id={material.id} label={material.title} />}
           {material.canDelete && (
             <button
               type="button"

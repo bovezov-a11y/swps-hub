@@ -16,8 +16,10 @@ public interface MaterialRepository extends JpaRepository<Material, UUID> {
             where m.course.id = :courseId
               and (:type is null or m.type = :type)
               and (:academicYear is null or m.academicYear = :academicYear)
+              and (m.hidden = false or m.uploadedBy = :viewerId or :viewerIsModerator = true)
             """)
-    List<Material> findForCourse(UUID courseId, MaterialType type, String academicYear, Pageable pageable);
+    List<Material> findForCourse(UUID courseId, MaterialType type, String academicYear, UUID viewerId,
+                                 boolean viewerIsModerator, Pageable pageable);
 
     @Query("select m from Material m join fetch m.course where m.id = :id")
     Optional<Material> findWithCourseById(UUID id);
@@ -26,6 +28,7 @@ public interface MaterialRepository extends JpaRepository<Material, UUID> {
     @Query("""
             select m from Material m join fetch m.course c
             where c.id in (select en.id.courseId from Enrollment en where en.id.userId = :userId)
+              and m.hidden = false
             order by m.createdAt desc
             """)
     List<Material> findLatestForUser(UUID userId, Pageable pageable);
