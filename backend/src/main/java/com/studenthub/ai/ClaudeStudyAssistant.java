@@ -27,6 +27,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +48,14 @@ class ClaudeStudyAssistant implements StudyAssistant {
             Summarize this material for a student preparing for the exam in this course.""";
 
     private static final String FLASHCARDS_TASK = """
-            Turn this material into flashcards for spaced-repetition study. Each card tests one fact or concept,             the front is short, and the back answers it without needing the other cards.""";
+            Turn this material into flashcards for spaced-repetition study. Each card tests one fact or concept, \
+            the front is short, and the back answers it without needing the other cards.""";
+
+    private static final String SYLLABUS_TASK = """
+            This file is the course syllabus. List every graded assessment with its date, so the student can put \
+            them in a calendar. Today is %s; a date without a year belongs to the academic year that contains \
+            the semester described. Copy dates exactly as the syllabus states them and leave the date empty when \
+            only a week or period is given.""";
 
     private static final String QUIZ_TASK = """
             Write a practice quiz that checks whether a student understands this material. Each question has \
@@ -97,6 +105,12 @@ class ClaudeStudyAssistant implements StudyAssistant {
     @Override
     public StudyAids.FlashcardSet flashcards(StudyMaterial material) {
         return ask(material, StudyAids.FlashcardSet.class, OutputConfig.Effort.MEDIUM, FLASHCARDS_TASK);
+    }
+
+    @Override
+    public StudyAids.SyllabusPlan syllabus(StudyMaterial syllabus, LocalDate today) {
+        // Dates go straight into calendars, so reading them carefully is worth the extra thinking.
+        return ask(syllabus, StudyAids.SyllabusPlan.class, OutputConfig.Effort.HIGH, SYLLABUS_TASK.formatted(today));
     }
 
     private <T> T ask(StudyMaterial material, Class<T> type, OutputConfig.Effort effort, String task) {

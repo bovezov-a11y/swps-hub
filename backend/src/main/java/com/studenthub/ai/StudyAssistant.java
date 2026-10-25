@@ -3,6 +3,8 @@ package com.studenthub.ai;
 import com.studenthub.ai.StudyAids.Quiz;
 import com.studenthub.ai.StudyAids.Summary;
 
+import java.time.LocalDate;
+
 /** Turns a course material into study aids with a language model. */
 public interface StudyAssistant {
 
@@ -16,6 +18,9 @@ public interface StudyAssistant {
     Quiz quiz(StudyMaterial material);
 
     StudyAids.FlashcardSet flashcards(StudyMaterial material);
+
+    /** Reads the assessments and their dates out of a course syllabus. */
+    StudyAids.SyllabusPlan syllabus(StudyMaterial syllabus, LocalDate today);
 
     /**
      * The file and the context the model needs.

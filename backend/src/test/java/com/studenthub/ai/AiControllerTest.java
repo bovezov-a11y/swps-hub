@@ -98,6 +98,56 @@ class AiControllerTest extends ApiTest {
         }
     }
 
+    @Test
+    void aSyllabusIsReadIntoAssessmentsWithOnlyExactDates() {
+        TestUser student = registerUser();
+        String courseId = createCourse(student, uniqueCode());
+
+        MvcTestResult result = uploadSyllabus(student, courseId, "syllabus.pdf");
+
+        assertThat(result).hasStatus(HttpStatus.OK);
+        assertThat(result).bodyJson().extractingPath("$.gradingSummary").isEqualTo("Midterm 30%, essay 20%, final exam 50%.");
+        assertThat(result).bodyJson().extractingPath("$.items[0].type").isEqualTo("EXAM");
+        assertThat(result).bodyJson().extractingPath("$.items[0].date").isEqualTo("2026-11-18");
+        assertThat(result).bodyJson().extractingPath("$.items[0].time").isEqualTo("10:00:00");
+        assertThat(result).bodyJson().extractingPath("$.items[0].weightPercent").isEqualTo(30);
+        // A date the model wrote in words is not trusted; the student fills it in.
+        assertThat(result).bodyJson().extractingPath("$.items[1].date").isNull();
+        assertThat(result).bodyJson().extractingPath("$.items[2].timing").isEqualTo("exam session");
+        assertThat(get(student, "/api/courses/" + courseId + "/events")).bodyJson()
+                .extractingPath("$").asArray().isEmpty();
+        assertThat(get(student, "/api/ai/status")).bodyJson().extractingPath("$.usedToday").isEqualTo(1);
+    }
+
+    @Test
+    void onlyCourseMembersCanImportASyllabus() {
+        String courseId = createCourse(registerUser(), uniqueCode());
+        int callsBefore = studyAssistant.calls.get();
+
+        MvcTestResult result = uploadSyllabus(registerUser(), courseId, "syllabus.pdf");
+
+        assertThat(result).hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(studyAssistant.calls.get()).isEqualTo(callsBefore);
+    }
+
+    @Test
+    void aSyllabusMustBeAFileTheModelCanRead() {
+        TestUser student = registerUser();
+
+        MvcTestResult result = uploadSyllabus(student, createCourse(student, uniqueCode()), "syllabus.docx");
+
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(result).bodyJson().extractingPath("$.errors.file").asString().contains("PDF");
+    }
+
+    private MvcTestResult uploadSyllabus(TestUser user, String courseId, String fileName) {
+        return mvc.post().uri("/api/courses/" + courseId + "/ai/syllabus").multipart()
+                .file(new MockMultipartFile("file", fileName, "application/octet-stream",
+                        "%PDF-1.7 syllabus".getBytes(StandardCharsets.UTF_8)))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + user.token())
+                .exchange();
+    }
+
     private String upload(TestUser user, String courseId, String fileName) {
         MvcTestResult result = mvc.post().uri("/api/courses/" + courseId + "/materials").multipart()
                 .file(new MockMultipartFile("file", fileName, "application/octet-stream",

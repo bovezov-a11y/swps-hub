@@ -83,6 +83,24 @@ class ClaudeStudyAssistantTest {
     }
 
     @Test
+    void readsASyllabusWithTodaysDateAndAKindEnum() {
+        respondWith("end_turn", """
+                {"assessments": [{"title": "Midterm", "kind": "EXAM", "date": "2026-11-18", "time": "10:00", \
+                "weightPercent": 30, "timing": ""}], "gradingSummary": "Midterm 30%."}""");
+
+        StudyAids.SyllabusPlan plan = assistant().syllabus(PDF, java.time.LocalDate.of(2026, 10, 25));
+
+        assertThat(plan.assessments()).singleElement()
+                .satisfies(item -> assertThat(item.kind()).isEqualTo(StudyAids.AssessmentKind.EXAM));
+        String body = requestBody.get();
+        assertThat(JsonPath.<String>read(body, "$.output_config.effort")).isEqualTo("high");
+        assertThat(JsonPath.<List<String>>read(body,
+                "$.output_config.format.schema.properties.assessments.items.properties.kind.enum"))
+                .containsExactly("EXAM", "DEADLINE");
+        assertThat(JsonPath.<String>read(body, "$.messages[0].content[1].text")).contains("Today is 2026-10-25");
+    }
+
+    @Test
     void aRefusalBecomesANonRetryableError() {
         respondWith("refusal", null);
 

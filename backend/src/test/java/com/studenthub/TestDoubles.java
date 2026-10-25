@@ -1,17 +1,21 @@
 package com.studenthub;
 
+import com.studenthub.ai.StudyAids.Assessment;
+import com.studenthub.ai.StudyAids.AssessmentKind;
 import com.studenthub.ai.StudyAids.Card;
 import com.studenthub.ai.StudyAids.FlashcardSet;
 import com.studenthub.ai.StudyAids.KeyTerm;
 import com.studenthub.ai.StudyAids.Question;
 import com.studenthub.ai.StudyAids.Quiz;
 import com.studenthub.ai.StudyAids.Summary;
+import com.studenthub.ai.StudyAids.SyllabusPlan;
 import com.studenthub.ai.StudyAssistant;
 import com.studenthub.mail.EmailSender;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,6 +79,16 @@ public class TestDoubles {
             calls.incrementAndGet();
             return new FlashcardSet(List.of(new Card("What is a heap?", "A tree-based priority queue."),
                     new Card("Quicksort average time?", "O(n log n).")));
+        }
+
+        @Override
+        public SyllabusPlan syllabus(StudyMaterial syllabus, LocalDate today) {
+            calls.incrementAndGet();
+            return new SyllabusPlan(List.of(
+                    new Assessment("Midterm exam", AssessmentKind.EXAM, "2026-11-18", "10:00", 30, ""),
+                    new Assessment("Essay", AssessmentKind.DEADLINE, "18 November", "", 20, ""),
+                    new Assessment("Final exam", AssessmentKind.EXAM, "", "", 50, "exam session")),
+                    "Midterm 30%, essay 20%, final exam 50%.");
         }
 
         @Override

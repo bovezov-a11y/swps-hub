@@ -6,20 +6,31 @@ import com.studenthub.ai.StudyAssistant.StudyAssistantException;
 import com.studenthub.ai.StudyAssistant.StudyMaterial;
 import com.studenthub.auth.CurrentUser;
 import com.studenthub.common.CodedException;
+import com.studenthub.common.ForbiddenException;
 import com.studenthub.common.InvalidRequestException;
 import com.studenthub.common.NotFoundException;
+import com.studenthub.course.Course;
+import com.studenthub.course.CourseService;
 import com.studenthub.flashcard.FlashcardService;
+import com.studenthub.material.FileTypes;
 import com.studenthub.material.Material;
 import com.studenthub.material.MaterialRepository;
 import com.studenthub.storage.FileStorage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -42,10 +53,12 @@ class AiService {
     private final AiProperties properties;
     private final JsonMapper json;
     private final FlashcardService flashcards;
+    private final CourseService courses;
+    private final ZoneId zone;
 
     AiService(StudyAssistant assistant, MaterialRepository materials, MaterialAiResultRepository results,
               AiUsageTracker usage, FileStorage storage, AiProperties properties, JsonMapper json,
-              FlashcardService flashcards) {
+              FlashcardService flashcards, CourseService courses, @Value("${app.time-zone}") ZoneId zone) {
         this.assistant = assistant;
         this.materials = materials;
         this.results = results;
@@ -54,6 +67,8 @@ class AiService {
         this.properties = properties;
         this.json = json;
         this.flashcards = flashcards;
+        this.courses = courses;
+        this.zone = zone;
     }
 
     AiStatus status(CurrentUser user) {
@@ -88,6 +103,69 @@ class AiService {
         return flashcards.createGeneratedDeck(material.getCourse().getId(), "Flashcards: " + material.getTitle(),
                 materialId, set.cards().stream()
                         .map(card -> new FlashcardService.CardInput(card.front(), card.back())).toList());
+    }
+
+    /**
+     * Reads the assessments out of a syllabus so the student can review them before adding them to the course.
+     * Nothing is stored: the file is only sent to the model, and the student decides what goes in the calendar.
+     */
+    SyllabusImport readSyllabus(CurrentUser user, UUID courseId, MultipartFile file) {
+        requireEnabled();
+        Course course = courses.require(courseId);
+        if (!courses.isEnrolled(user.id(), courseId) && !user.isModerator()) {
+            throw new ForbiddenException("Join the course to add dates from its syllabus");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new InvalidRequestException("file", "choose the syllabus file");
+        }
+        String fileName = Optional.ofNullable(file.getOriginalFilename()).filter(name -> !name.isBlank())
+                .orElse("syllabus");
+        String contentType = FileTypes.contentTypeFor(fileName).filter(StudyAssistant::supports)
+                .orElseThrow(() -> new InvalidRequestException("file", "upload the syllabus as a PDF, image or text file"));
+        if (file.getSize() > properties.maxFileSize().toBytes()) {
+            throw new InvalidRequestException("file",
+                    "the syllabus must be at most " + properties.maxFileSize().toMegabytes() + " MB");
+        }
+        byte[] content;
+        try {
+            content = file.getBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not read the uploaded syllabus", e);
+        }
+
+        StudyMaterial input = new StudyMaterial(course.getCode(), course.getName(), fileName, "syllabus",
+                contentType, content);
+        usage.consume(user.id(), properties.dailyLimit());
+        StudyAids.SyllabusPlan plan = generate(() -> assistant.syllabus(input, LocalDate.now(zone)));
+        return new SyllabusImport(blankToNull(plan.gradingSummary()), plan.assessments().stream()
+                .map(assessment -> new SyllabusImport.Item(assessment.title().strip(), assessment.kind(),
+                        parse(assessment.date(), LocalDate::parse), parse(assessment.time(), LocalTime::parse),
+                        assessment.weightPercent() > 0 ? assessment.weightPercent() : null,
+                        blankToNull(assessment.timing())))
+                .toList());
+    }
+
+    /** What the model found in a syllabus. Dates it could not read exactly are left empty for the student. */
+    record SyllabusImport(String gradingSummary, List<Item> items) {
+
+        record Item(String title, StudyAids.AssessmentKind type, LocalDate date, LocalTime time,
+                    Integer weightPercent, String timing) {
+        }
+    }
+
+    private static <T> T parse(String value, Function<String, T> parser) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return parser.apply(value.strip());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 
     private void requireEnabled() {

@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ChevronRight, FileText, Layers, MessageCircleQuestion, Pencil, Plus, UserRound, Users, UsersRound, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, FileText, Layers, MessageCircleQuestion, Pencil, Plus, Sparkles, UserRound, Users, UsersRound, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button, LinkButton } from '../../components/Button'
@@ -9,6 +9,7 @@ import { ApiError } from '../../lib/api'
 import { studyYearLabel, terms } from '../../lib/academic'
 import { programIdentity } from '../../lib/program-identity'
 import type { CourseDetail, CourseEvent } from '../../lib/types'
+import { useAiStatus } from '../ai/api'
 import { FlashcardsSection } from '../flashcards/FlashcardsSection'
 import { GroupsSection } from '../groups/GroupsSection'
 import { MaterialsSection } from '../materials/MaterialsSection'
@@ -16,6 +17,7 @@ import { QaSection } from '../qa/QaSection'
 import { useCourse, useCourseEvents, useDeleteEvent, useEnrollment } from './api'
 import { EventForm } from './EventForm'
 import { EventList } from './EventList'
+import { SyllabusImport } from './SyllabusImport'
 
 export function CourseDetailPage() {
   const { courseId } = useParams() as { courseId: string }
@@ -180,6 +182,8 @@ function CourseSchedule({ course }: { course: CourseDetail }) {
   const events = useCourseEvents(course.id)
   const deleteEvent = useDeleteEvent(course.id)
   const [isAdding, setIsAdding] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const ai = useAiStatus()
   const [showPast, setShowPast] = useState(false)
   const [now] = useState(() => Date.now())
 
@@ -214,12 +218,22 @@ function CourseSchedule({ course }: { course: CourseDetail }) {
           ))}
         </div>
         {course.enrolled && !isAdding && (
-          <Button onClick={() => setIsAdding(true)}>
-            <Plus className="size-4" aria-hidden="true" />
-            Add event
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {ai.data?.enabled && (
+              <Button variant="secondary" onClick={() => setImporting(true)}>
+                <Sparkles className="size-4 text-indigo-600" aria-hidden="true" />
+                Import from syllabus
+              </Button>
+            )}
+            <Button onClick={() => setIsAdding(true)}>
+              <Plus className="size-4" aria-hidden="true" />
+              Add event
+            </Button>
+          </div>
         )}
       </div>
+
+      {importing && <SyllabusImport courseId={course.id} onClose={() => setImporting(false)} />}
 
       {isAdding && (
         <div className="mt-5">

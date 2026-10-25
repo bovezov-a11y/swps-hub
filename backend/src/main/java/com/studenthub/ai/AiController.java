@@ -7,7 +7,9 @@ import com.studenthub.auth.CurrentUser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -39,6 +41,13 @@ class AiController {
     }
 
     record DeckCreated(UUID deckId) {
+    }
+
+    /** Reads exams and deadlines out of an uploaded syllabus for the student to review; nothing is saved. */
+    @PostMapping("/api/courses/{courseId}/ai/syllabus")
+    AiService.SyllabusImport syllabus(CurrentUser user, @PathVariable UUID courseId,
+                                      @RequestPart(name = "file", required = false) MultipartFile file) {
+        return aiService.readSyllabus(user, courseId, file);
     }
 
     /** Returns the material's practice quiz, generating it on first use. */

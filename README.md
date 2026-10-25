@@ -28,6 +28,7 @@ An unofficial platform for SWPS University students: course schedules, an exam c
 - AI summaries and practice quizzes for shared PDFs, images and text files, generated with Claude, stored once and shared by every student, with a daily limit per student
 
 ### Phase 4 – Learning, community and university tools ✅
+- **Syllabus import:** upload a course syllabus and Claude lists its exams, deadlines and grade weights; students check and correct them before they are added to the course calendar
 - **Flashcards with spaced repetition (SM-2):** shared decks per course, private progress, daily streak, keyboard-driven flip-card study; Claude can turn any shared PDF into a deck
 - **Anonymous Q&A per course:** ask, answer, upvote, and the asker accepts the best answer; names are never shown
 - **Study groups:** capacity-limited groups per course; only members see who is in a group and where it meets
@@ -108,6 +109,7 @@ The backend is organised by feature (`auth`, `course`, `event`, `calendar`) rath
 | `GET` `POST` | `/api/courses/{id}/decks` | List flashcard decks with due counts, or create one |
 | `GET` | `/api/decks/{id}/study` | Cards due now, then new ones |
 | `POST` | `/api/cards/{id}/reviews` | Grade a card (`AGAIN`, `HARD`, `GOOD`, `EASY`) |
+| `POST` | `/api/courses/{id}/ai/syllabus` | Read exams and deadlines from a syllabus file (multipart; nothing is saved) |
 | `POST` | `/api/materials/{id}/ai/flashcards` | Turn a material into a flashcard deck with Claude |
 | `GET` | `/api/me/learning`, `/api/me/workload` | Flashcard streak; personal workload and crunch weeks |
 | `POST` | `/api/me/study-plans` | Plan study sessions before an exam |

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import type { Material } from '../../lib/types'
 
@@ -43,5 +43,31 @@ export function useStudyAid<K extends StudyAidKind>(materialId: string, kind: K)
     },
     staleTime: Infinity,
     retry: false,
+  })
+}
+
+export type SyllabusItem = {
+  title: string
+  type: 'EXAM' | 'DEADLINE'
+  /** Only set when the syllabus gives an exact day. */
+  date: string | null
+  time: string | null
+  weightPercent: number | null
+  /** When it happens if there is no exact date, such as "week 8". */
+  timing: string | null
+}
+
+export type SyllabusImport = { gradingSummary: string | null; items: SyllabusItem[] }
+
+/** Sends a syllabus to the AI and returns the assessments it found. Nothing is saved until the student confirms. */
+export function useReadSyllabus(courseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      return api<SyllabusImport>(`/courses/${courseId}/ai/syllabus`, { method: 'POST', body: form })
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: statusKey }),
   })
 }
