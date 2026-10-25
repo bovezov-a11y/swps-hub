@@ -1,0 +1,47 @@
+# An isolated copy of SWPS Hub for recording the demo video: its own database and uploads, served on
+# http://localhost:3100, so recording never touches your everyday local data. Uses the images that
+# `docker compose --profile app build` produced in the project root.
+#
+#   docker compose -p swps-demo -f scripts/demo-video/compose.demo.yaml up -d
+#   docker compose -p swps-demo -f scripts/demo-video/compose.demo.yaml down -v   # throw it away
+name: swps-demo
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: studenthub
+      POSTGRES_USER: studenthub
+      POSTGRES_PASSWORD: studenthub
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studenthub -d studenthub"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+
+  backend:
+    image: project1-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/studenthub
+      SPRING_DATASOURCE_USERNAME: studenthub
+      SPRING_DATASOURCE_PASSWORD: studenthub
+      STORAGE_DIR: /app/data/uploads
+      MAIL_HOST: mailpit
+      PUBLIC_URL: http://localhost:3100
+      # A placeholder, not a real key: it only switches the AI buttons on. The demo shows sample AI results that
+      # the seed script stores in advance, so the recording never calls the Claude API.
+      ANTHROPIC_API_KEY: demo-placeholder-no-api-calls
+      ADMIN_EMAILS: ewa.lis@swps.edu.pl
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: project1-frontend
+    ports:
+      - "3100:80"
+    depends_on:
+      - backend

@@ -176,3 +176,13 @@ The policy text lives in [`frontend/src/content/privacy-policy.ts`](frontend/src
 cd backend && ./mvnw verify   # integration tests against a real PostgreSQL (Testcontainers)
 cd frontend && npm test       # Vitest + React Testing Library
 ```
+
+### Demo video
+
+`scripts/demo-video` records a narrated walkthrough of every feature with Playwright, on an isolated copy of the app (port 3100, its own database) filled with made-up students and data. The AI scenes use sample results stored by the seed script, so no API key is needed.
+
+```bash
+docker compose --profile app build              # images the demo stack runs
+cd scripts/demo-video && npm install && npx playwright install chromium
+./reset.sh && node record.mjs                    # writes out/swps-hub-demo.mp4
+```
