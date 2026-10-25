@@ -3,7 +3,9 @@
 //
 //   docker compose -p swps-demo -f compose.demo.yaml up -d && node seed.mjs && node record.mjs
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readdirSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ffmpeg from 'ffmpeg-static'
 import { chromium } from 'playwright'
@@ -115,12 +117,18 @@ const titleCard = (inner) => `<!doctype html><html><head><meta charset="utf-8"><
 const logo = '<div class="logo"><span class="swps">SWPS</span><span class="hub">hub</span></div>'
 
 async function main() {
-  rmSync(OUT, { recursive: true, force: true })
+  const reachable = await fetch(`${BASE}/api/programs`).then(() => true, () => false)
+  if (!reachable) {
+    console.error(`The demo app is not running at ${BASE}. Start and seed it first:\n\n  scripts/demo-video/reset.sh\n`)
+    process.exit(1)
+  }
+  // Record into a temporary folder; the previous video is only replaced once the new one is complete.
+  const work = mkdtempSync(join(tmpdir(), 'swps-demo-'))
   mkdirSync(OUT, { recursive: true })
   const browser = await chromium.launch()
   const context = await browser.newContext({
     viewport: { width: WIDTH, height: HEIGHT },
-    recordVideo: { dir: OUT, size: { width: WIDTH, height: HEIGHT } },
+    recordVideo: { dir: work, size: { width: WIDTH, height: HEIGHT } },
     locale: 'en-GB',
     timezoneId: 'Europe/Warsaw',
   })
@@ -441,10 +449,13 @@ async function main() {
   await context.close()
   await browser.close()
 
-  const webm = readdirSync(OUT).find((name) => name.endsWith('.webm'))
-  const mp4 = `${OUT}swps-hub-demo.mp4`
-  execFileSync(ffmpeg, ['-y', '-loglevel', 'error', '-i', `${OUT}${webm}`, '-c:v', 'libx264', '-preset', 'slow', '-crf', '18',
-    '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4])
+  const webm = readdirSync(work).find((name) => name.endsWith('.webm'))
+  const encoded = join(work, 'swps-hub-demo.mp4')
+  execFileSync(ffmpeg, ['-y', '-loglevel', 'error', '-i', join(work, webm), '-c:v', 'libx264', '-preset', 'slow', '-crf', '18',
+    '-pix_fmt', 'yuv420p', '-movflags', '+faststart', encoded])
+  const mp4 = join(OUT, 'swps-hub-demo.mp4')
+  renameSync(encoded, mp4)
+  rmSync(work, { recursive: true, force: true })
   console.log(`\nSaved ${mp4}`)
   console.log(JSON.stringify(chapters))
 }
