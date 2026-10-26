@@ -185,4 +185,5 @@ cd frontend && npm test       # Vitest + React Testing Library
 docker compose --profile app build              # images the demo stack runs
 cd scripts/demo-video && npm install && npx playwright install chromium
 ./reset.sh && node record.mjs                    # writes out/swps-hub-demo.mp4
+./reset.sh && node screenshots.mjs && node brief.mjs   # writes out/SWPS-Hub-project-overview.pdf
 ```
